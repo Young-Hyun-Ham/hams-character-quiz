@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useSyncExternalStore } from "react";
 import { quizWorlds } from "./data";
+import { SiteHeader } from "./components/site-header";
 
 type LayoutMode = "web" | "tablet" | "mobile";
 
@@ -30,10 +31,7 @@ export default function Home() {
   return (
     <main className="home-shell">
       <div className="sky-decoration cloud-one" /><div className="sky-decoration cloud-two" />
-      <header className="home-header">
-        <div className="brand" aria-label="한글 몬스터 홈"><span className="brand-mark">ㅎ</span><span>한글 몬스터</span></div>
-        <div className="parent-link"><span>☆</span> 오늘도 즐겁게!</div>
-      </header>
+      <SiteHeader />
       <section className="hero"><span className="hero-badge">한글 놀이 학습</span><h1>어떤 친구와<br /><em>한글을 배워볼까?</em></h1><p>좋아하는 친구를 골라 이름을 따라 써봐요!</p>
         <div className="layout-picker" role="group" aria-label="퀴즈 화면 배치 선택">
           <button type="button" className={layoutMode === "web" ? "active" : ""} aria-pressed={layoutMode === "web"} onClick={() => setSelectedLayout("web")}><strong>웹형</strong><small>기본</small></button>

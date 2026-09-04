@@ -58,6 +58,28 @@ const mysteryAptCharacters: Character[] = [
   { id: 54, name: "지네귀신", image: "/mystery-apt/catalog/catalog-54.png", hint: "지" },
 ];
 
+const wishcatCharacters: Character[] = [
+  { name: "아이냥", image: "/wishcat/catalog/ainyang.png", hint: "아" },
+  { name: "알로하냥", image: "/wishcat/catalog/alohanyang.png", hint: "알" },
+  { name: "나비냥", image: "/wishcat/catalog/nabinyang.png", hint: "나" },
+  { name: "베베냥", image: "/wishcat/catalog/bebenyang.png", hint: "베" },
+  { name: "라떼냥", image: "/wishcat/catalog/lattenyang.png", hint: "라" },
+  { name: "이쁘냥", image: "/wishcat/catalog/ippeunyang.png", hint: "이" },
+  { name: "러브냥", image: "/wishcat/catalog/loveyang.png", hint: "러" },
+  { name: "쨍쨍냥", image: "/wishcat/catalog/jjaengjjaengnyang.png", hint: "쨍" },
+  { name: "똑똑냥", image: "/wishcat/catalog/ttokttoknyang.png", hint: "똑" },
+  { name: "헬씨냥", image: "/wishcat/catalog/healthynyang.png", hint: "헬" },
+  { name: "닥터냥", image: "/wishcat/catalog/doctornyang.png", hint: "닥" },
+  { name: "꾸미냥", image: "/wishcat/catalog/kkuminyang.png", hint: "꾸" },
+  { name: "난다냥", image: "/wishcat/catalog/nandanyang.png", hint: "난" },
+  { name: "달달냥", image: "/wishcat/catalog/daldalnyang.png", hint: "달" },
+  { name: "빠삐냥", image: "/wishcat/catalog/ppappinyang.png", hint: "빠" },
+  { name: "아트냥", image: "/wishcat/catalog/artnyang.png", hint: "아" },
+  { name: "우아냥", image: "/wishcat/catalog/woanyang.png", hint: "우" },
+  { name: "코코냥", image: "/wishcat/catalog/kokonyang.png", hint: "코" },
+  { name: "샴푸냥", image: "/wishcat/catalog/shampoonyang.png", hint: "샴" },
+];
+
 const quizWorldData: QuizWorld[] = [
   { slug: "pokemon", title: "포켓몬", english: "POKÉMON", description: "1,025마리 포켓몬 친구들", color: "#ff705d", softColor: "#fff1e9", accent: "#ffb92e", cover: "https://data1.pokemonkorea.co.kr/newdata/pokedex/mid/002501.png", characters: pokemonCharacters },
   { slug: "teenieping", title: "티니핑", english: "TEENIEPING", description: "153명의 반짝이는 티니핑", color: "#ff77aa", softColor: "#fff0f7", accent: "#ff9dc2", cover: "/teenieping/catalog/season-1-03.png", characters: [
@@ -215,6 +237,7 @@ const quizWorldData: QuizWorld[] = [
     { name: "샤를핑", image: "/teenieping/catalog/season-6-20.png", hint: "샤", season: 6 },
     { name: "젠틀핑", image: "/teenieping/catalog/season-6-21.png", hint: "젠", season: 6 },
   ] },
+  { slug: "wishcat", title: "위시캣", english: "WISH CAT", description: "19마리의 사랑스러운 위시캣 친구들", color: "#f06da9", softColor: "#fff0f8", accent: "#77d5e9", cover: "/wishcat/catalog/ainyang.png", characters: wishcatCharacters },
   { slug: "mystery-apt", title: "신비아파트", english: "THE HAUNTED HOUSE", description: "54명의 오싹한 귀신과 등장인물", color: "#7654c4", softColor: "#f3efff", accent: "#b79cec", cover: "/mystery-apt/catalog/catalog-01.png", characters: mysteryAptCharacters },
   { slug: "cinnamoroll", title: "시나모롤", english: "CINNAMOROLL", description: "시나모롤과 포근한 친구들 11명", color: "#65bde8", softColor: "#edf9ff", accent: "#8ed6f6", cover: "/cinnamoroll/catalog/cinnamoroll.png", characters: [
     { name: "시나모롤", image: "/cinnamoroll/catalog/cinnamoroll.png", hint: "시" },
