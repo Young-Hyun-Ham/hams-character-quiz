@@ -57,7 +57,11 @@ export default function QuizGame({ world, initialQuestions }: { world: QuizWorld
     const ctx = canvas.getContext("2d");
     if (ctx) { ctx.scale(ratio, ratio); ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = "#334155"; ctx.lineWidth = 9; }
   }, []);
-  useEffect(() => { sizeCanvas(); window.addEventListener("resize", sizeCanvas); return () => window.removeEventListener("resize", sizeCanvas); }, [sizeCanvas]);
+  useEffect(() => {
+    if (!finished) sizeCanvas();
+    window.addEventListener("resize", sizeCanvas);
+    return () => window.removeEventListener("resize", sizeCanvas);
+  }, [finished, sizeCanvas]);
 
   const point = (event: ReactPointerEvent<HTMLCanvasElement>) => { const rect = event.currentTarget.getBoundingClientRect(); return { x: event.clientX - rect.left, y: event.clientY - rect.top }; };
   const startDrawing = (event: ReactPointerEvent<HTMLCanvasElement>) => { event.currentTarget.setPointerCapture(event.pointerId); drawing.current = true; const ctx = event.currentTarget.getContext("2d"); const p = point(event); activeStrokeRef.current = [p]; ctx?.beginPath(); ctx?.moveTo(p.x, p.y); };
