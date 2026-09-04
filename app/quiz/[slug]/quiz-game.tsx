@@ -9,6 +9,8 @@ type Answer = { character: Character; correct: boolean };
 type HandwritingPoint = { x: number; y: number };
 const QUESTION_COUNT = 10;
 const PASSING_SCORE = 95;
+const OUTSIDE_GUIDE_PENALTY = 100;
+const INSIDE_GUIDE_PENALTY = 50;
 
 function pickRandomQuestions(characters: Character[]) {
   const shuffled = [...characters];
@@ -36,6 +38,10 @@ export default function QuizGame({ world, initialQuestions }: { world: QuizWorld
   const strokesRef = useRef<HandwritingPoint[][]>([]);
   const activeStrokeRef = useRef<HandwritingPoint[]>([]);
   const current = questions[index];
+  const guideCharacterWidth = Math.max(Array.from(current.name).length, 2) * 1.08;
+  const answerGuideStyle = {
+    "--guide-font-size": `${92 / guideCharacterWidth}cqw`,
+  } as React.CSSProperties;
 
   const clearCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -95,6 +101,7 @@ export default function QuizGame({ world, initialQuestions }: { world: QuizWorld
     const makeLayer = () => { const layer = document.createElement("canvas"); layer.width = canvas.width; layer.height = canvas.height; return layer; };
     const targetLine = makeLayer();
     const targetArea = makeLayer();
+    const targetFill = makeLayer();
     const writtenArea = makeLayer();
     const drawTarget = (layer: HTMLCanvasElement, lineWidth: number) => {
       const context = layer.getContext("2d");
@@ -107,6 +114,13 @@ export default function QuizGame({ world, initialQuestions }: { world: QuizWorld
     };
     drawTarget(targetLine, 3);
     drawTarget(targetArea, 32);
+    const targetFillContext = targetFill.getContext("2d");
+    if (!targetFillContext) return;
+    targetFillContext.scale(ratio, ratio);
+    targetFillContext.font = `${guideStyle.fontWeight} ${guideStyle.fontSize} ${guideStyle.fontFamily}`;
+    targetFillContext.textAlign = "center"; targetFillContext.textBaseline = "middle";
+    targetFillContext.fillStyle = "#000";
+    targetFillContext.fillText(current.name, canvas.width / ratio / 2, canvas.height / ratio / 2);
 
     const writtenContext = writtenArea.getContext("2d");
     if (!writtenContext) return;
@@ -121,17 +135,27 @@ export default function QuizGame({ world, initialQuestions }: { world: QuizWorld
     const writtenPixels = canvas.getContext("2d")?.getImageData(0, 0, canvas.width, canvas.height).data;
     const targetLinePixels = targetLine.getContext("2d")?.getImageData(0, 0, canvas.width, canvas.height).data;
     const targetAreaPixels = targetArea.getContext("2d")?.getImageData(0, 0, canvas.width, canvas.height).data;
+    const targetFillPixels = targetFill.getContext("2d")?.getImageData(0, 0, canvas.width, canvas.height).data;
     const writtenAreaPixels = writtenArea.getContext("2d")?.getImageData(0, 0, canvas.width, canvas.height).data;
-    if (!writtenPixels || !targetLinePixels || !targetAreaPixels || !writtenAreaPixels) return;
+    if (!writtenPixels || !targetLinePixels || !targetAreaPixels || !targetFillPixels || !writtenAreaPixels) return;
 
-    let writtenCount = 0; let writtenNearTarget = 0; let targetCount = 0; let targetNearWriting = 0;
+    let writtenCount = 0; let writtenNearTarget = 0; let writtenInsideTarget = 0; let writtenOutsideTarget = 0; let targetCount = 0; let targetNearWriting = 0;
     for (let pixel = 3; pixel < writtenPixels.length; pixel += 4) {
-      if (writtenPixels[pixel] > 20) { writtenCount += 1; if (targetAreaPixels[pixel] > 0) writtenNearTarget += 1; }
+      if (writtenPixels[pixel] > 20) {
+        writtenCount += 1;
+        if (targetAreaPixels[pixel] > 0) writtenNearTarget += 1;
+        else if (targetFillPixels[pixel] > 0) writtenInsideTarget += 1;
+        else writtenOutsideTarget += 1;
+      }
       if (targetLinePixels[pixel] > 0) { targetCount += 1; if (writtenAreaPixels[pixel] > 0) targetNearWriting += 1; }
     }
     const precision = writtenNearTarget / Math.max(writtenCount, 1);
     const coverage = targetNearWriting / Math.max(targetCount, 1);
-    const score = Math.round((precision * 0.55 + coverage * 0.45) * 100);
+    const insideGuideRatio = writtenInsideTarget / Math.max(writtenCount, 1);
+    const outsideGuideRatio = writtenOutsideTarget / Math.max(writtenCount, 1);
+    const shapeScore = (precision * 0.55 + coverage * 0.45) * 100;
+    const deviationPenalty = insideGuideRatio * INSIDE_GUIDE_PENALTY + outsideGuideRatio * OUTSIDE_GUIDE_PENALTY;
+    const score = Math.max(0, Math.round(shapeScore - deviationPenalty));
     const correct = score >= PASSING_SCORE && precision >= 0.45 && coverage >= 0.35;
     setSimilarityScore(score); setRecognizedCorrect(correct); setShowAnswer(true);
   };
@@ -164,7 +188,7 @@ export default function QuizGame({ world, initialQuestions }: { world: QuizWorld
         <div className="character-stage"><span className="stage-star star-a">✦</span><span className="stage-star star-b">✧</span><Image src={current.image} alt={`${world.title} 캐릭터 문제`} width={245} height={225} unoptimized /></div>
         <div className="writing-section">
           <div className="writing-heading"><div><span className="pencil">✎</span><strong>이름을 따라 써보세요</strong><small>손가락이나 마우스로 쓸 수 있어요</small></div><button type="button" onClick={clearCanvas}>↻ 다시 쓰기</button></div>
-          <div className="writing-board"><div className="guide-lines" aria-hidden="true" /><div ref={answerGuideRef} className={`answer-guide ${showAnswer ? "visible" : ""}`}>{current.name}</div><canvas ref={canvasRef} aria-label="한글 쓰기 영역" onPointerDown={startDrawing} onPointerMove={draw} onPointerUp={stopDrawing} onPointerCancel={stopDrawing} onPointerLeave={stopDrawing} /></div>
+          <div className="writing-board"><div className="guide-lines" aria-hidden="true" /><div ref={answerGuideRef} className={`answer-guide ${showAnswer ? "visible" : ""}`} style={answerGuideStyle}>{current.name}</div><canvas ref={canvasRef} aria-label="한글 쓰기 영역" onPointerDown={startDrawing} onPointerMove={draw} onPointerUp={stopDrawing} onPointerCancel={stopDrawing} onPointerLeave={stopDrawing} /></div>
           <p className="hint-text">첫 글자는 <strong>{current.hint}</strong>로 시작해요!</p>
         </div>
         {!showAnswer ? <div className="quiz-actions single"><button className="next-button" type="button" onClick={checkHandwriting} disabled={!strokes}>{strokes ? "자동 채점하기" : "먼저 이름을 써보세요"} <span>→</span></button></div> : <div className={`recognition-result ${recognizedCorrect ? "correct" : "wrong"}`}><p>글자 모양 점수 <b>{similarityScore}점</b></p><strong>{recognizedCorrect ? "정답이에요!" : `조금 더 따라 써봐요. 정답은 ${current.name}!`}</strong><button className="next-button" type="button" onClick={() => grade(Boolean(recognizedCorrect))}>{index === questions.length - 1 ? "채점 결과 보기" : "다음 문제"} <span>→</span></button></div>}
