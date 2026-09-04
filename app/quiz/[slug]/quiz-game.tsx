@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import type { Character, QuizWorld } from "../../data";
 
@@ -11,6 +12,21 @@ const QUESTION_COUNT = 10;
 const PASSING_SCORE = 95;
 const OUTSIDE_GUIDE_PENALTY = 100;
 const INSIDE_GUIDE_PENALTY = 50;
+
+function subscribeToQuizViewport(callback: () => void) {
+  window.addEventListener("resize", callback);
+  window.addEventListener("orientationchange", callback);
+  return () => {
+    window.removeEventListener("resize", callback);
+    window.removeEventListener("orientationchange", callback);
+  };
+}
+
+function getResponsiveLayoutClass() {
+  if (window.innerWidth > 1180) return "";
+  const isUsableLandscape = window.innerWidth > window.innerHeight && window.innerWidth >= 600;
+  return isUsableLandscape ? "layout-tablet" : "layout-mobile";
+}
 
 function pickRandomQuestions(characters: Character[]) {
   const shuffled = [...characters];
@@ -24,6 +40,11 @@ function pickRandomQuestions(characters: Character[]) {
 }
 
 export default function QuizGame({ world, initialQuestions }: { world: QuizWorld; initialQuestions: Character[] }) {
+  const searchParams = useSearchParams();
+  const selectedLayout = searchParams.get("layout");
+  const responsiveLayoutClass = useSyncExternalStore(subscribeToQuizViewport, getResponsiveLayoutClass, () => "");
+  const selectedLayoutClass = selectedLayout === "tablet" ? "layout-tablet" : selectedLayout === "mobile" ? "layout-mobile" : "";
+  const layoutClass = responsiveLayoutClass || selectedLayoutClass;
   const [questions, setQuestions] = useState(() => initialQuestions.slice(0, QUESTION_COUNT));
   const [index, setIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
@@ -181,7 +202,7 @@ export default function QuizGame({ world, initialQuestions }: { world: QuizWorld
   }
 
   return (
-    <main className="quiz-shell" style={{ "--theme": world.color, "--soft": world.softColor } as React.CSSProperties}>
+    <main className={`quiz-shell ${layoutClass}`} style={{ "--theme": world.color, "--soft": world.softColor } as React.CSSProperties}>
       <header className="quiz-header"><Link href="/" className="round-icon" aria-label="처음으로">‹</Link><div className="progress-wrap"><div className="progress-label"><strong>{world.title} 퀴즈</strong><span>{index + 1} / {questions.length}</span></div><div className="progress"><i style={{ width: `${((index + 1) / questions.length) * 100}%` }} /></div></div><button className="round-icon sound" type="button" aria-label="이름 듣기" onClick={speak}>♪</button></header>
       <section className="quiz-content">
         <div className="question-title"><span>Q.</span><h1>이 친구의 이름은 뭘까요?</h1></div>
