@@ -8,10 +8,46 @@ import type { Character, QuizWorld } from "../../data";
 
 type Answer = { character: Character; correct: boolean };
 type HandwritingPoint = { x: number; y: number };
+type DialogueSide = "left" | "right";
+type QuizEvent = {
+  id: string;
+  icon: string;
+  title: string;
+  message: string;
+  probability: number;
+};
 const QUESTION_COUNT = 10;
-const PASSING_SCORE = 95;
+const PASSING_SCORE = 96;
 const OUTSIDE_GUIDE_PENALTY = 100;
 const INSIDE_GUIDE_PENALTY = 50;
+const MONSTER_DIALOGUES = [
+  "안녕! 만나서 반가워!",
+  "오늘 기분은 어때?",
+  "우리 같이 한글을 써볼까?",
+  "넌 정말 잘하고 있어!",
+  "내 이름을 맞혀봐!",
+  "오늘도 힘내자!",
+  "안녕!",
+  "사랑해~",
+] as const;
+// probability는 0~1 사이의 값입니다. 전체 합이 1보다 작아야 남은 확률에 모달이 표시되지 않습니다.
+const QUIZ_EVENTS = [
+  { id: "candy", icon: "🍬", title: "사탕 이벤트!", message: "오늘 사탕 하나를 선물로 받아보세요!", probability: 0.007 },
+  { id: "pokemon-bread", icon: "🥐", title: "포켓몬빵 이벤트!", message: "오늘의 간식은 포켓몬빵! 부모님께 이 화면을 보여주세요.", probability: 0.001 },
+  { id: "parent-kiss", icon: "💋", title: "엄마·아빠 뽀뽀 이벤트!", message: "엄마와 아빠에게 사랑 가득 뽀뽀를 받아요!", probability: 0.01 },
+] as const satisfies readonly QuizEvent[];
+
+function pickQuizEvent() {
+  const draw = Math.random();
+  let accumulatedProbability = 0;
+
+  for (const quizEvent of QUIZ_EVENTS) {
+    accumulatedProbability += quizEvent.probability;
+    if (draw < accumulatedProbability) return quizEvent;
+  }
+
+  return null;
+}
 
 function subscribeToQuizViewport(callback: () => void) {
   window.addEventListener("resize", callback);
@@ -53,8 +89,12 @@ export default function QuizGame({ world, initialQuestions }: { world: QuizWorld
   const [finished, setFinished] = useState(false);
   const [similarityScore, setSimilarityScore] = useState(0);
   const [recognizedCorrect, setRecognizedCorrect] = useState<boolean | null>(null);
+  const [characterDialogue, setCharacterDialogue] = useState<string | null>(null);
+  const [dialogueSide, setDialogueSide] = useState<DialogueSide>("right");
+  const [activeQuizEvent, setActiveQuizEvent] = useState<QuizEvent | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const answerGuideRef = useRef<HTMLDivElement>(null);
+  const eventCloseButtonRef = useRef<HTMLButtonElement>(null);
   const drawing = useRef(false);
   const strokesRef = useRef<HandwritingPoint[][]>([]);
   const activeStrokeRef = useRef<HandwritingPoint[]>([]);
@@ -89,27 +129,47 @@ export default function QuizGame({ world, initialQuestions }: { world: QuizWorld
     window.addEventListener("resize", sizeCanvas);
     return () => window.removeEventListener("resize", sizeCanvas);
   }, [finished, sizeCanvas]);
+  useEffect(() => {
+    const popupTimer = window.setTimeout(() => setActiveQuizEvent(pickQuizEvent()), 500);
+    return () => window.clearTimeout(popupTimer);
+  }, []);
+  useEffect(() => {
+    if (!activeQuizEvent) return;
+    eventCloseButtonRef.current?.focus();
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setActiveQuizEvent(null);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [activeQuizEvent]);
 
   const point = (event: ReactPointerEvent<HTMLCanvasElement>) => { const rect = event.currentTarget.getBoundingClientRect(); return { x: event.clientX - rect.left, y: event.clientY - rect.top }; };
   const startDrawing = (event: ReactPointerEvent<HTMLCanvasElement>) => { event.currentTarget.setPointerCapture(event.pointerId); drawing.current = true; const ctx = event.currentTarget.getContext("2d"); const p = point(event); activeStrokeRef.current = [p]; ctx?.beginPath(); ctx?.moveTo(p.x, p.y); };
   const draw = (event: ReactPointerEvent<HTMLCanvasElement>) => { if (!drawing.current) return; const ctx = event.currentTarget.getContext("2d"); const p = point(event); activeStrokeRef.current.push(p); ctx?.lineTo(p.x, p.y); ctx?.stroke(); };
   const stopDrawing = () => { if (!drawing.current) return; drawing.current = false; if (activeStrokeRef.current.length) strokesRef.current.push(activeStrokeRef.current); activeStrokeRef.current = []; setStrokes((value) => value + 1); };
   const speak = () => { if ("speechSynthesis" in window) { speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance(current.name)); } };
+  const showRandomDialogue = () => {
+    setDialogueSide(Math.random() < 0.5 ? "left" : "right");
+    setCharacterDialogue((previousDialogue) => {
+      const candidates = MONSTER_DIALOGUES.filter((dialogue) => dialogue !== previousDialogue);
+      return candidates[Math.floor(Math.random() * candidates.length)];
+    });
+  };
   const grade = (correct: boolean) => {
     const nextAnswers = [...answers, { character: current, correct }];
     setAnswers(nextAnswers);
     if (index === questions.length - 1) { setFinished(true); return; }
-    setIndex((value) => value + 1); setShowAnswer(false); clearCanvas();
+    setIndex((value) => value + 1); setShowAnswer(false); setCharacterDialogue(null); clearCanvas();
   };
   const retryWrong = () => {
     const wrong = answers.filter((answer) => !answer.correct).map((answer) => answer.character).sort(() => Math.random() - 0.5);
     strokesRef.current = []; activeStrokeRef.current = [];
-    setQuestions(wrong); setAnswers([]); setIndex(0); setShowAnswer(false); setFinished(false); setStrokes(0);
+    setQuestions(wrong); setAnswers([]); setIndex(0); setShowAnswer(false); setFinished(false); setStrokes(0); setCharacterDialogue(null);
     setSimilarityScore(0); setRecognizedCorrect(null);
   };
   const restart = () => {
     strokesRef.current = []; activeStrokeRef.current = [];
-    setQuestions(pickRandomQuestions(world.characters)); setAnswers([]); setIndex(0); setShowAnswer(false); setFinished(false); setStrokes(0);
+    setQuestions(pickRandomQuestions(world.characters)); setAnswers([]); setIndex(0); setShowAnswer(false); setFinished(false); setStrokes(0); setCharacterDialogue(null);
     setSimilarityScore(0); setRecognizedCorrect(null);
   };
   const checkHandwriting = () => {
@@ -203,10 +263,29 @@ export default function QuizGame({ world, initialQuestions }: { world: QuizWorld
 
   return (
     <main className={`quiz-shell ${layoutClass}`} style={{ "--theme": world.color, "--soft": world.softColor } as React.CSSProperties}>
+      {activeQuizEvent && (
+        <div className="quiz-event-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setActiveQuizEvent(null); }}>
+          <section className="quiz-event-modal" role="dialog" aria-modal="true" aria-labelledby="quiz-event-title" aria-describedby="quiz-event-message">
+            <span className="quiz-event-sparkle sparkle-left" aria-hidden="true">✦</span>
+            <span className="quiz-event-sparkle sparkle-right" aria-hidden="true">✧</span>
+            <div className="quiz-event-icon" aria-hidden="true">{activeQuizEvent.icon}</div>
+            <span className="quiz-event-badge">깜짝 이벤트 당첨</span>
+            <h2 id="quiz-event-title">{activeQuizEvent.title}</h2>
+            <p id="quiz-event-message">{activeQuizEvent.message}</p>
+            <button ref={eventCloseButtonRef} type="button" onClick={() => setActiveQuizEvent(null)}>신나게 퀴즈 시작하기</button>
+          </section>
+        </div>
+      )}
       <header className="quiz-header"><Link href="/" className="round-icon" aria-label="처음으로">‹</Link><div className="progress-wrap"><div className="progress-label"><strong>{world.title} 퀴즈</strong><span>{index + 1} / {questions.length}</span></div><div className="progress"><i style={{ width: `${((index + 1) / questions.length) * 100}%` }} /></div></div><button className="round-icon sound" type="button" aria-label="이름 듣기" onClick={speak}>♪</button></header>
       <section className="quiz-content">
         <div className="question-title"><span>Q.</span><h1>이 친구의 이름은 뭘까요?</h1></div>
-        <div className="character-stage"><span className="stage-star star-a">✦</span><span className="stage-star star-b">✧</span><Image src={current.image} alt={`${world.title} 캐릭터 문제`} width={245} height={225} unoptimized /></div>
+        <div className="character-stage">
+          <span className="stage-star star-a">✦</span><span className="stage-star star-b">✧</span>
+          {characterDialogue && <div key={`${dialogueSide}-${characterDialogue}`} className={`character-dialogue dialogue-${dialogueSide}`} role="status" aria-live="polite">{characterDialogue}</div>}
+          <button className="character-button" type="button" onClick={showRandomDialogue} aria-label={`${current.name}와 대화하기`}>
+            <Image src={current.image} alt={`${world.title} 캐릭터 문제`} width={245} height={225} unoptimized />
+          </button>
+        </div>
         <div className="writing-section">
           <div className="writing-heading"><div><span className="pencil">✎</span><strong>이름을 따라 써보세요</strong><small>손가락이나 마우스로 쓸 수 있어요</small></div><button type="button" onClick={clearCanvas}>↻ 다시 쓰기</button></div>
           <div className="writing-board"><div className="guide-lines" aria-hidden="true" /><div ref={answerGuideRef} className={`answer-guide ${showAnswer ? "visible" : ""}`} style={answerGuideStyle}>{current.name}</div><canvas ref={canvasRef} aria-label="한글 쓰기 영역" onPointerDown={startDrawing} onPointerMove={draw} onPointerUp={stopDrawing} onPointerCancel={stopDrawing} onPointerLeave={stopDrawing} /></div>
