@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./drawing.css";
 .writing-board{container-type:inline-size}.answer-guide{font-size:min(118px,var(--guide-font-size))!important;line-height:1}
 :root{--ink:#28334a;--muted:#738097;--cream:#fffcf7}*{box-sizing:border-box}html,body{margin:0;min-height:100%}body{color:var(--ink);background:var(--cream);font-family:Arial,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}button,a{font:inherit}button{color:inherit}a{color:inherit;text-decoration:none}
 .layout-picker{width:max-content;max-width:100%;margin:24px auto 0;padding:5px;display:grid;grid-template-columns:repeat(3,1fr);gap:5px;border:1px solid #e7e2da;border-radius:18px;background:rgba(255,255,255,.78);box-shadow:0 6px 20px rgba(48,57,76,.07)}.layout-picker button{min-width:92px;padding:9px 15px;border:0;border-radius:13px;background:transparent;color:#828a99;cursor:pointer;display:flex;align-items:baseline;justify-content:center;gap:5px}.layout-picker button strong{font-size:13px}.layout-picker button small{font-size:10px}.layout-picker button.active{background:#fff;color:#ff7162;box-shadow:0 3px 10px rgba(48,57,76,.11)}

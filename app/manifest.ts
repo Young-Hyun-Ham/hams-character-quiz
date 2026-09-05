@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "한글 몬스터",
     short_name: "한글 몬스터",
-    description: "좋아하는 캐릭터 이름을 따라 쓰며 배우는 어린이 한글 퀴즈",
+    description: "좋아하는 캐릭터의 이름을 따라 쓰고 도감 가이드로 그림을 그리는 어린이 놀이 학습",
     start_url: "/",
     display: "standalone",
     background_color: "#fff8ee",
