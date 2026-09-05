@@ -8,7 +8,7 @@ import type { QuizWorld } from "../../data";
 
 type Point = { x: number; y: number };
 type Stroke = { color: string; size: number; points: Point[] };
-type GestureStart = { mode: "pinch" | "pan"; distance: number; zoom: number; scrollLeft: number; scrollTop: number; midpoint: Point };
+type GestureStart = { scrollLeft: number; scrollTop: number; midpoint: Point };
 
 const PAGE_SIZE = 48;
 const MIN_GUIDE_ZOOM = 60;
@@ -56,8 +56,6 @@ export default function DrawingStudio({ world, initialCharacterIndex }: { world:
   const gestureRef = useRef(false);
   const gestureStartRef = useRef<GestureStart | null>(null);
   const suppressSingleTouchRef = useRef(false);
-  const gestureZoomUpdateRef = useRef(false);
-  const gestureFrameRef = useRef<number | null>(null);
   const character = world.characters[selected];
 
   const filteredCharacters = useMemo(() => {
@@ -106,20 +104,12 @@ export default function DrawingStudio({ world, initialCharacterIndex }: { world:
   useEffect(() => {
     const paper = drawingPaperRef.current;
     if (!paper) return;
-    if (gestureZoomUpdateRef.current) {
-      gestureZoomUpdateRef.current = false;
-      return;
-    }
     const frame = window.requestAnimationFrame(() => {
       paper.scrollLeft = Math.max(0, (paper.scrollWidth - paper.clientWidth) / 2);
       paper.scrollTop = Math.max(0, (paper.scrollHeight - paper.clientHeight) / 2);
     });
     return () => window.cancelAnimationFrame(frame);
   }, [guideZoom]);
-
-  useEffect(() => () => {
-    if (gestureFrameRef.current !== null) window.cancelAnimationFrame(gestureFrameRef.current);
-  }, []);
 
   useEffect(() => {
     if (!referenceOpen) return;
@@ -194,11 +184,8 @@ export default function DrawingStudio({ world, initialCharacterIndex }: { world:
   };
   const startTouchGesture = () => {
     const paper = drawingPaperRef.current;
-    const points = Array.from(touchPointersRef.current.values()).slice(0, 3);
-    if (!paper || points.length < 2) return;
-    const mode = points.length >= 3 ? "pan" : "pinch";
-    const gesturePoints = mode === "pan" ? points.slice(0, 3) : points.slice(0, 2);
-    const distance = Math.hypot(points[1].x - points[0].x, points[1].y - points[0].y);
+    const points = Array.from(touchPointersRef.current.values()).slice(0, 2);
+    if (!paper || touchPointersRef.current.size !== 2 || points.length < 2) return;
     gestureRef.current = true;
     suppressSingleTouchRef.current = true;
     drawingRef.current = false;
@@ -206,14 +193,11 @@ export default function DrawingStudio({ world, initialCharacterIndex }: { world:
     activeStrokeCommittedRef.current = false;
     setIsDrawing(true);
     gestureStartRef.current = {
-      mode,
-      distance: Math.max(distance, 1),
-      zoom: guideZoom,
       scrollLeft: paper.scrollLeft,
       scrollTop: paper.scrollTop,
       midpoint: {
-        x: gesturePoints.reduce((sum, point) => sum + point.x, 0) / gesturePoints.length,
-        y: gesturePoints.reduce((sum, point) => sum + point.y, 0) / gesturePoints.length,
+        x: (points[0].x + points[1].x) / 2,
+        y: (points[0].y + points[1].y) / 2,
       },
     };
   };
@@ -222,8 +206,15 @@ export default function DrawingStudio({ world, initialCharacterIndex }: { world:
     event.currentTarget.setPointerCapture(event.pointerId);
     if (event.pointerType === "touch") {
       touchPointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
-      if (touchPointersRef.current.size === 2 || touchPointersRef.current.size === 3) {
+      if (touchPointersRef.current.size === 2) {
         startTouchGesture();
+        return;
+      }
+      if (touchPointersRef.current.size >= 3) {
+        gestureRef.current = false;
+        gestureStartRef.current = null;
+        suppressSingleTouchRef.current = true;
+        setIsDrawing(false);
         return;
       }
       if (touchPointersRef.current.size > 1 || suppressSingleTouchRef.current) return;
@@ -237,42 +228,24 @@ export default function DrawingStudio({ world, initialCharacterIndex }: { world:
   const draw = (event: ReactPointerEvent<HTMLCanvasElement>) => {
     if (event.pointerType === "touch" && touchPointersRef.current.has(event.pointerId)) {
       touchPointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (touchPointersRef.current.size !== 2) return;
       if (gestureRef.current && gestureStartRef.current) {
         const paper = drawingPaperRef.current;
         const gestureStart = gestureStartRef.current;
-        const pointCount = gestureStart.mode === "pan" ? 3 : 2;
-        const points = Array.from(touchPointersRef.current.values()).slice(0, pointCount);
+        const points = Array.from(touchPointersRef.current.values()).slice(0, 2);
         if (!paper || points.length < 2) return;
-        if (gestureStart.mode === "pan" && points.length < 3) return;
         const paperBounds = paper.getBoundingClientRect();
         const startMidpoint = {
           x: gestureStart.midpoint.x - paperBounds.left,
           y: gestureStart.midpoint.y - paperBounds.top,
         };
 
-        if (gestureStart.mode === "pan") {
-          const midpoint = {
-            x: points.reduce((sum, point) => sum + point.x, 0) / points.length - paperBounds.left,
-            y: points.reduce((sum, point) => sum + point.y, 0) / points.length - paperBounds.top,
-          };
-          paper.scrollLeft = Math.max(0, gestureStart.scrollLeft + startMidpoint.x - midpoint.x);
-          paper.scrollTop = Math.max(0, gestureStart.scrollTop + startMidpoint.y - midpoint.y);
-          return;
-        }
-
-        const distance = Math.max(Math.hypot(points[1].x - points[0].x, points[1].y - points[0].y), 1);
-        const zoom = Math.round(Math.min(MAX_GUIDE_ZOOM, Math.max(MIN_GUIDE_ZOOM, gestureStart.zoom * distance / gestureStart.distance)));
-        const scale = zoom / gestureStart.zoom;
-        if (zoom !== guideZoom) {
-          gestureZoomUpdateRef.current = true;
-          setGuideZoom(zoom);
-        }
-        if (gestureFrameRef.current !== null) window.cancelAnimationFrame(gestureFrameRef.current);
-        gestureFrameRef.current = window.requestAnimationFrame(() => {
-          paper.scrollLeft = Math.max(0, (gestureStart.scrollLeft + startMidpoint.x) * scale - startMidpoint.x);
-          paper.scrollTop = Math.max(0, (gestureStart.scrollTop + startMidpoint.y) * scale - startMidpoint.y);
-          gestureFrameRef.current = null;
-        });
+        const midpoint = {
+          x: (points[0].x + points[1].x) / 2 - paperBounds.left,
+          y: (points[0].y + points[1].y) / 2 - paperBounds.top,
+        };
+        paper.scrollLeft = Math.max(0, gestureStart.scrollLeft + startMidpoint.x - midpoint.x);
+        paper.scrollTop = Math.max(0, gestureStart.scrollTop + startMidpoint.y - midpoint.y);
         return;
       }
       if (suppressSingleTouchRef.current) return;
@@ -299,12 +272,13 @@ export default function DrawingStudio({ world, initialCharacterIndex }: { world:
   const stopDrawing = (event: ReactPointerEvent<HTMLCanvasElement>) => {
     if (event.pointerType === "touch") {
       touchPointersRef.current.delete(event.pointerId);
+      if (touchPointersRef.current.size === 2) {
+        startTouchGesture();
+        return;
+      }
       if (gestureRef.current) {
-        if (touchPointersRef.current.size >= 2) startTouchGesture();
-        else {
-          gestureRef.current = false;
-          gestureStartRef.current = null;
-        }
+        gestureRef.current = false;
+        gestureStartRef.current = null;
         if (touchPointersRef.current.size === 0) suppressSingleTouchRef.current = false;
         setIsDrawing(false);
         return;
