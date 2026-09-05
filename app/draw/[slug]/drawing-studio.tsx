@@ -8,6 +8,7 @@ import type { QuizWorld } from "../../data";
 
 type Point = { x: number; y: number };
 type Stroke = { color: string; size: number; points: Point[] };
+type GestureStart = { mode: "pinch" | "pan"; distance: number; zoom: number; scrollLeft: number; scrollTop: number; midpoint: Point };
 
 const PAGE_SIZE = 48;
 const MIN_GUIDE_ZOOM = 60;
@@ -39,6 +40,7 @@ export default function DrawingStudio({ world, initialCharacterIndex }: { world:
   const [brushColor, setBrushColor] = useState(COLORS[0]);
   const [brushSize, setBrushSize] = useState(BRUSH_SIZES[0]);
   const [hasDrawing, setHasDrawing] = useState(false);
+  const [isDrawing, setIsDrawing] = useState(false);
   const [historyState, setHistoryState] = useState({ undo: 0, redo: 0 });
   const [referenceOpen, setReferenceOpen] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -48,7 +50,14 @@ export default function DrawingStudio({ world, initialCharacterIndex }: { world:
   const strokesRef = useRef<Stroke[]>([]);
   const redoStrokesRef = useRef<Stroke[]>([]);
   const activeStrokeRef = useRef<Stroke | null>(null);
+  const activeStrokeCommittedRef = useRef(false);
   const drawingRef = useRef(false);
+  const touchPointersRef = useRef(new Map<number, Point>());
+  const gestureRef = useRef(false);
+  const gestureStartRef = useRef<GestureStart | null>(null);
+  const suppressSingleTouchRef = useRef(false);
+  const gestureZoomUpdateRef = useRef(false);
+  const gestureFrameRef = useRef<number | null>(null);
   const character = world.characters[selected];
 
   const filteredCharacters = useMemo(() => {
@@ -97,12 +106,20 @@ export default function DrawingStudio({ world, initialCharacterIndex }: { world:
   useEffect(() => {
     const paper = drawingPaperRef.current;
     if (!paper) return;
+    if (gestureZoomUpdateRef.current) {
+      gestureZoomUpdateRef.current = false;
+      return;
+    }
     const frame = window.requestAnimationFrame(() => {
       paper.scrollLeft = Math.max(0, (paper.scrollWidth - paper.clientWidth) / 2);
       paper.scrollTop = Math.max(0, (paper.scrollHeight - paper.clientHeight) / 2);
     });
     return () => window.cancelAnimationFrame(frame);
   }, [guideZoom]);
+
+  useEffect(() => () => {
+    if (gestureFrameRef.current !== null) window.cancelAnimationFrame(gestureFrameRef.current);
+  }, []);
 
   useEffect(() => {
     if (!referenceOpen) return;
@@ -125,7 +142,13 @@ export default function DrawingStudio({ world, initialCharacterIndex }: { world:
     strokesRef.current = [];
     redoStrokesRef.current = [];
     activeStrokeRef.current = null;
+    activeStrokeCommittedRef.current = false;
     drawingRef.current = false;
+    touchPointersRef.current.clear();
+    gestureRef.current = false;
+    gestureStartRef.current = null;
+    suppressSingleTouchRef.current = false;
+    setIsDrawing(false);
     setHasDrawing(false);
     setHistoryState({ undo: 0, redo: 0 });
     redrawCanvas();
@@ -160,24 +183,107 @@ export default function DrawingStudio({ world, initialCharacterIndex }: { world:
     const bounds = event.currentTarget.getBoundingClientRect();
     return { x: (event.clientX - bounds.left) / bounds.width, y: (event.clientY - bounds.top) / bounds.height };
   };
-  const startDrawing = (event: ReactPointerEvent<HTMLCanvasElement>) => {
-    event.preventDefault();
-    event.currentTarget.setPointerCapture(event.pointerId);
-    drawingRef.current = true;
-    const stroke = { color: brushColor, size: brushSize, points: [getPoint(event)] };
-    activeStrokeRef.current = stroke;
+  const commitActiveStroke = () => {
+    const stroke = activeStrokeRef.current;
+    if (!stroke || activeStrokeCommittedRef.current) return;
     redoStrokesRef.current = [];
     strokesRef.current.push(stroke);
+    activeStrokeCommittedRef.current = true;
     setHasDrawing(true);
     setHistoryState({ undo: strokesRef.current.length, redo: 0 });
   };
+  const startTouchGesture = () => {
+    const paper = drawingPaperRef.current;
+    const points = Array.from(touchPointersRef.current.values()).slice(0, 3);
+    if (!paper || points.length < 2) return;
+    const mode = points.length >= 3 ? "pan" : "pinch";
+    const gesturePoints = mode === "pan" ? points.slice(0, 3) : points.slice(0, 2);
+    const distance = Math.hypot(points[1].x - points[0].x, points[1].y - points[0].y);
+    gestureRef.current = true;
+    suppressSingleTouchRef.current = true;
+    drawingRef.current = false;
+    activeStrokeRef.current = null;
+    activeStrokeCommittedRef.current = false;
+    setIsDrawing(true);
+    gestureStartRef.current = {
+      mode,
+      distance: Math.max(distance, 1),
+      zoom: guideZoom,
+      scrollLeft: paper.scrollLeft,
+      scrollTop: paper.scrollTop,
+      midpoint: {
+        x: gesturePoints.reduce((sum, point) => sum + point.x, 0) / gesturePoints.length,
+        y: gesturePoints.reduce((sum, point) => sum + point.y, 0) / gesturePoints.length,
+      },
+    };
+  };
+  const startDrawing = (event: ReactPointerEvent<HTMLCanvasElement>) => {
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    if (event.pointerType === "touch") {
+      touchPointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (touchPointersRef.current.size === 2 || touchPointersRef.current.size === 3) {
+        startTouchGesture();
+        return;
+      }
+      if (touchPointersRef.current.size > 1 || suppressSingleTouchRef.current) return;
+    }
+    drawingRef.current = true;
+    setIsDrawing(true);
+    const stroke = { color: brushColor, size: brushSize, points: [getPoint(event)] };
+    activeStrokeRef.current = stroke;
+    activeStrokeCommittedRef.current = false;
+  };
   const draw = (event: ReactPointerEvent<HTMLCanvasElement>) => {
+    if (event.pointerType === "touch" && touchPointersRef.current.has(event.pointerId)) {
+      touchPointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (gestureRef.current && gestureStartRef.current) {
+        const paper = drawingPaperRef.current;
+        const gestureStart = gestureStartRef.current;
+        const pointCount = gestureStart.mode === "pan" ? 3 : 2;
+        const points = Array.from(touchPointersRef.current.values()).slice(0, pointCount);
+        if (!paper || points.length < 2) return;
+        if (gestureStart.mode === "pan" && points.length < 3) return;
+        const paperBounds = paper.getBoundingClientRect();
+        const startMidpoint = {
+          x: gestureStart.midpoint.x - paperBounds.left,
+          y: gestureStart.midpoint.y - paperBounds.top,
+        };
+
+        if (gestureStart.mode === "pan") {
+          const midpoint = {
+            x: points.reduce((sum, point) => sum + point.x, 0) / points.length - paperBounds.left,
+            y: points.reduce((sum, point) => sum + point.y, 0) / points.length - paperBounds.top,
+          };
+          paper.scrollLeft = Math.max(0, gestureStart.scrollLeft + startMidpoint.x - midpoint.x);
+          paper.scrollTop = Math.max(0, gestureStart.scrollTop + startMidpoint.y - midpoint.y);
+          return;
+        }
+
+        const distance = Math.max(Math.hypot(points[1].x - points[0].x, points[1].y - points[0].y), 1);
+        const zoom = Math.round(Math.min(MAX_GUIDE_ZOOM, Math.max(MIN_GUIDE_ZOOM, gestureStart.zoom * distance / gestureStart.distance)));
+        const scale = zoom / gestureStart.zoom;
+        if (zoom !== guideZoom) {
+          gestureZoomUpdateRef.current = true;
+          setGuideZoom(zoom);
+        }
+        if (gestureFrameRef.current !== null) window.cancelAnimationFrame(gestureFrameRef.current);
+        gestureFrameRef.current = window.requestAnimationFrame(() => {
+          paper.scrollLeft = Math.max(0, (gestureStart.scrollLeft + startMidpoint.x) * scale - startMidpoint.x);
+          paper.scrollTop = Math.max(0, (gestureStart.scrollTop + startMidpoint.y) * scale - startMidpoint.y);
+          gestureFrameRef.current = null;
+        });
+        return;
+      }
+      if (suppressSingleTouchRef.current) return;
+    }
     if (!drawingRef.current || !activeStrokeRef.current) return;
     const canvas = event.currentTarget;
     const bounds = canvas.getBoundingClientRect();
     const context = canvas.getContext("2d");
     const point = getPoint(event);
     const stroke = activeStrokeRef.current;
+    commitActiveStroke();
     const previous = stroke.points.at(-1) || point;
     stroke.points.push(point);
     if (!context) return;
@@ -190,9 +296,29 @@ export default function DrawingStudio({ world, initialCharacterIndex }: { world:
     context.lineTo(point.x * bounds.width, point.y * bounds.height);
     context.stroke();
   };
-  const stopDrawing = () => {
+  const stopDrawing = (event: ReactPointerEvent<HTMLCanvasElement>) => {
+    if (event.pointerType === "touch") {
+      touchPointersRef.current.delete(event.pointerId);
+      if (gestureRef.current) {
+        if (touchPointersRef.current.size >= 2) startTouchGesture();
+        else {
+          gestureRef.current = false;
+          gestureStartRef.current = null;
+        }
+        if (touchPointersRef.current.size === 0) suppressSingleTouchRef.current = false;
+        setIsDrawing(false);
+        return;
+      }
+      if (suppressSingleTouchRef.current) {
+        if (touchPointersRef.current.size === 0) suppressSingleTouchRef.current = false;
+        return;
+      }
+    }
+    commitActiveStroke();
     drawingRef.current = false;
     activeStrokeRef.current = null;
+    activeStrokeCommittedRef.current = false;
+    setIsDrawing(false);
     redrawCanvas();
   };
 
@@ -247,7 +373,7 @@ export default function DrawingStudio({ world, initialCharacterIndex }: { world:
 
         <section className="studio-panel">
           <div className="studio-title"><div><span>오늘의 모델</span><h2>{character.name}</h2></div><p>연한 가이드를 따라 천천히 그려보세요!</p><button ref={referenceButtonRef} className="model-reference" type="button" onClick={() => setReferenceOpen(true)} aria-haspopup="dialog"><small>크게 보기</small><Image src={character.image} alt={`${character.name} 원본 색상 참고 이미지`} width={92} height={92} unoptimized /></button></div>
-          <div className="drawing-frame">
+          <div className={`drawing-frame${isDrawing ? " is-drawing" : ""}`}>
             <div className="drawing-canvas-option drawing-color-options tool-group color-tools"><span>색연필</span><div>{COLORS.map((color) => <button type="button" key={color} className={brushColor === color ? "active" : ""} style={{ background: color }} onClick={() => setBrushColor(color)} aria-label={`${color} 색상`} aria-pressed={brushColor === color} />)}<label className="custom-color" title="다른 색상 선택"><input type="color" value={brushColor} onChange={(event) => setBrushColor(event.target.value)} aria-label="다른 색상 선택" /><i style={{ background: brushColor }} /><b aria-hidden="true">＋</b></label></div></div>
             <div className="drawing-history" aria-label="그리기 편집 기록">
               <button type="button" onClick={undoStroke} disabled={!historyState.undo} aria-label="마지막 획 되돌리기" title="되돌리기">↶</button>
