@@ -1,0 +1,184 @@
+.game-picker {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(700px, calc(100% - 24px));
+  max-height: calc(100dvh - 24px);
+  overflow: auto;
+  padding: 20px 26px 28px;
+  border: 3px solid #fff;
+  border-radius: 30px;
+  background: linear-gradient(150deg, #fff, var(--soft));
+  color: #354057;
+  box-shadow: 0 24px 80px #28334a40;
+  text-align: center;
+}
+.game-picker::backdrop {
+  background: #25304380;
+  backdrop-filter: blur(7px);
+}
+.game-picker-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.game-picker-toolbar button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 14px;
+  padding: 8px 12px;
+  background: #edf1f5;
+  color: #526078;
+  font-weight: 800;
+  cursor: pointer;
+}
+.game-picker-toolbar .game-picker-close {
+  margin-left: auto;
+  width: 40px;
+  font-size: 25px;
+  padding: 0;
+}
+.game-picker-kicker {
+  color: #687486;
+  font-size: 12px;
+  font-weight: 900;
+}
+.game-picker h2 {
+  margin: 8px 0;
+  font-size: clamp(21px, 4vw, 29px);
+  letter-spacing: -0.05em;
+}
+.game-picker > p {
+  margin: 0 0 20px;
+  color: #727e91;
+  font-size: 13px;
+}
+.game-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.game-picker-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 8px;
+  border: 2px solid #e8edf1;
+  border-radius: 20px;
+  background: #fff;
+}
+.game-picker-card small {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: #7c8796;
+}
+.game-picker-icon {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  background: var(--soft);
+  font-size: 32px;
+}
+.game-picker-card strong {
+  font-size: 16px;
+  word-break: keep-all;
+}
+.game-picker-description {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #6e7a8c;
+}
+.game-picker-card b {
+  margin-top: auto;
+  padding: 7px 10px;
+  border-radius: 20px;
+  background: #edf1f5;
+  font-size: 11px;
+  color: #627084;
+}
+.game-picker-card.available {
+  border-color: var(--theme);
+  box-shadow: 0 7px 18px color-mix(in srgb, var(--theme) 18%, transparent);
+}
+.game-picker-card.available b {
+  background: var(--soft);
+  color: #354057;
+}
+.game-picker-card.available:hover {
+  transform: translateY(-2px);
+}
+.game-picker-card.upcoming {
+  background: #ffffffb3;
+}
+.game-picker-card.upcoming .game-picker-icon {
+  background: #f1f4f8;
+}
+.game-picker button:focus-visible,
+.game-picker a:focus-visible {
+  outline: 3px solid #354057;
+  outline-offset: 3px;
+}
+@media (max-width: 480px) {
+  .game-picker {
+    padding: 14px 12px 18px;
+    border-radius: 24px;
+  }
+  .game-picker-grid {
+    gap: 7px;
+  }
+  .game-picker-card {
+    padding: 12px 5px;
+    gap: 7px;
+    border-radius: 15px;
+  }
+  .game-picker-icon {
+    width: 42px;
+    height: 42px;
+    font-size: 26px;
+  }
+  .game-picker-card strong {
+    font-size: 12px;
+  }
+  .game-picker-description {
+    font-size: 10px;
+  }
+  .game-picker-card b {
+    padding: 6px 7px;
+    font-size: 10px;
+  }
+}
+.game-picker button.game-picker-card {
+  width: 100%;
+  color: inherit;
+  cursor: pointer;
+  font-family: inherit;
+}
+.memory-level-card {
+  min-height: 210px;
+}
+.memory-level-card strong {
+  font-size: 22px;
+}
+.memory-level-card .game-picker-description {
+  word-break: keep-all;
+}
+.memory-level-grid {
+  padding: 8px 0;
+}
+.memory-level-card b {
+  white-space: nowrap;
+}
+@media (max-width: 480px) {
+  .memory-level-card {
+    min-height: 180px;
+  }
+  .memory-level-card strong {
+    font-size: 18px;
+  }
+}

@@ -4,7 +4,9 @@ import { getQuizWorld, quizWorlds } from "../../data";
 import QuizGame from "./quiz-game";
 
 export const dynamic = "force-dynamic";
-export function generateStaticParams() { return quizWorlds.map(({ slug }) => ({ slug })); }
+export function generateStaticParams() {
+  return quizWorlds.map(({ slug }) => ({ slug }));
+}
 
 function randomQuestions<T>(items: T[], count: number) {
   const result = [...items];

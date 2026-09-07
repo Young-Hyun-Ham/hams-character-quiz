@@ -4,10 +4,15 @@ import { getAdminFirestore } from "@/lib/firebase-admin";
 export const runtime = "nodejs";
 
 function serializeDate(value: unknown) {
-  return value instanceof Timestamp ? value.toDate().toISOString() : new Date().toISOString();
+  return value instanceof Timestamp
+    ? value.toDate().toISOString()
+    : new Date().toISOString();
 }
 
-export async function GET(_request: Request, context: RouteContext<"/api/inquiries/[id]">) {
+export async function GET(
+  _request: Request,
+  context: RouteContext<"/api/inquiries/[id]">,
+) {
   try {
     const { id } = await context.params;
     const database = getAdminFirestore();
@@ -18,7 +23,10 @@ export async function GET(_request: Request, context: RouteContext<"/api/inquiri
     ]);
 
     if (!inquirySnapshot.exists) {
-      return Response.json({ error: "문의글을 찾을 수 없습니다." }, { status: 404 });
+      return Response.json(
+        { error: "문의글을 찾을 수 없습니다." },
+        { status: 404 },
+      );
     }
 
     const data = inquirySnapshot.data()!;
@@ -27,7 +35,10 @@ export async function GET(_request: Request, context: RouteContext<"/api/inquiri
       title: data.title,
       content: data.content,
       tags: Array.isArray(data.tags) ? data.tags : [],
-      commentCount: typeof data.commentCount === "number" ? data.commentCount : commentSnapshot.size,
+      commentCount:
+        typeof data.commentCount === "number"
+          ? data.commentCount
+          : commentSnapshot.size,
       createdAt: serializeDate(data.createdAt),
     };
     const comments = commentSnapshot.docs.map((document) => {
@@ -35,7 +46,8 @@ export async function GET(_request: Request, context: RouteContext<"/api/inquiri
       return {
         id: document.id,
         content: comment.content,
-        parentId: typeof comment.parentId === "string" ? comment.parentId : null,
+        parentId:
+          typeof comment.parentId === "string" ? comment.parentId : null,
         createdAt: serializeDate(comment.createdAt),
       };
     });
@@ -43,6 +55,9 @@ export async function GET(_request: Request, context: RouteContext<"/api/inquiri
     return Response.json({ inquiry, comments });
   } catch (error) {
     console.error("Failed to load inquiry", error);
-    return Response.json({ error: "문의글을 불러오지 못했습니다." }, { status: 500 });
+    return Response.json(
+      { error: "문의글을 불러오지 못했습니다." },
+      { status: 500 },
+    );
   }
 }

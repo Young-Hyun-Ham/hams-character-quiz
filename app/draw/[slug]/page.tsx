@@ -8,10 +8,19 @@ export function generateStaticParams() {
   return quizWorlds.map(({ slug }) => ({ slug }));
 }
 
-export default async function DrawPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function DrawPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const { slug } = await params;
   const world = getQuizWorld(slug);
   if (!world) notFound();
   const initialCharacterIndex = randomInt(world.characters.length);
-  return <DrawingStudio world={world} initialCharacterIndex={initialCharacterIndex} />;
+  return (
+    <DrawingStudio
+      world={world}
+      initialCharacterIndex={initialCharacterIndex}
+    />
+  );
 }

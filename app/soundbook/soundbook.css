@@ -1,0 +1,243 @@
+.soundbook-shell {
+  min-height: 100dvh;
+  background: linear-gradient(180deg, var(--soft), #f8fafc);
+  color: #354057;
+  padding-bottom: 32px;
+}
+.soundbook-name {
+  position: absolute;
+  z-index: 1;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  gap: 3px;
+  max-width: calc(100% - 28px);
+  padding: 9px 12px;
+  border: 1px solid #fff;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 14px #35405712;
+  font-size: clamp(16px, 4vw, 24px);
+  font-weight: 900;
+  line-height: 1.3;
+  pointer-events: none;
+}
+.soundbook-name-line {
+  display: flex;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+.soundbook-name-line > span {
+  display: inline-block;
+  min-width: 1em;
+  text-align: center;
+  text-shadow: 0 1px 1px #35405750;
+}
+.soundbook-header {
+  max-width: 1080px;
+  margin: auto;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 24px;
+}
+.soundbook-header a {
+  font-weight: 800;
+}
+.soundbook-header > span {
+  color: #687486;
+}
+.soundbook-card {
+  width: min(680px, calc(100% - 32px));
+  margin: 16px auto;
+  padding: 28px;
+  border: 3px solid white;
+  border-radius: 32px;
+  background: #fff;
+  box-shadow: 0 15px 50px #3540570d;
+  text-align: center;
+}
+.soundbook-card h1 {
+  font-size: clamp(23px, 4vw, 32px);
+  letter-spacing: -0.05em;
+  margin: 22px 0 8px;
+}
+.soundbook-card p {
+  color: #687486;
+  line-height: 1.7;
+}
+.soundbook-progress {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 800;
+}
+.soundbook-card progress {
+  display: block;
+  width: 100%;
+  height: 9px;
+  margin: 12px 0;
+  accent-color: var(--theme);
+}
+.soundbook-stage {
+  position: relative;
+  margin: 22px 0;
+}
+.soundbook-character {
+  width: 100%;
+  border: 2px dashed color-mix(in srgb, var(--theme) 35%, white);
+  border-radius: 28px;
+  background: linear-gradient(150deg, #fff, var(--soft));
+  padding: 20px;
+  cursor: pointer;
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+}
+.soundbook-character img {
+  width: min(360px, 100%);
+  height: clamp(210px, 36vh, 360px);
+  object-fit: contain;
+  filter: drop-shadow(0 12px 10px #3540571a);
+}
+.soundbook-character span {
+  background: white;
+  border-radius: 24px;
+  padding: 12px 24px;
+  font-weight: 900;
+  color: #354057;
+}
+.soundbook-character:hover {
+  border-color: var(--theme);
+}
+.soundbook-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(420px, calc(100% - 32px));
+  max-height: 90dvh;
+  overflow: auto;
+  padding: 28px 22px;
+  border: 2px solid #fff;
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #354057;
+  box-shadow: 0 24px 80px #28334a40;
+  backdrop-filter: blur(12px);
+  text-align: center;
+}
+.soundbook-dialog::backdrop {
+  background: #28334a40;
+  backdrop-filter: blur(5px);
+}
+.soundbook-status-icon {
+  font-size: 52px;
+}
+.soundbook-dialog h2 {
+  font-size: 23px;
+  margin: 12px 0;
+}
+.soundbook-dialog p {
+  overflow-wrap: anywhere;
+}
+.soundbook-countdown {
+  display: block;
+  font-size: 72px;
+  color: var(--theme);
+  line-height: 1.3;
+}
+.soundbook-countdown small {
+  font-size: 20px;
+  margin-left: 6px;
+}
+.soundbook-answer {
+  font-size: 26px;
+  font-weight: 900;
+}
+.soundbook-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 22px;
+}
+.soundbook-actions button,
+.soundbook-actions a {
+  min-height: 48px;
+  padding: 13px 22px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--theme);
+  color: #263247;
+  font-size: 16px;
+  font-weight: 900;
+  cursor: pointer;
+}
+.soundbook-actions .secondary,
+.soundbook-actions a {
+  background: #edf1f5;
+  color: #526078;
+}
+.soundbook-shell button:focus-visible,
+.soundbook-shell a:focus-visible {
+  outline: 3px solid #354057;
+  outline-offset: 4px;
+}
+.soundbook-card .soundbook-note {
+  font-size: 12px;
+  margin: 18px 0 0;
+}
+.soundbook-eyebrow {
+  font-weight: 900;
+  color: #687486;
+}
+.soundbook-summary ul {
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+.soundbook-summary li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #edf1f5;
+  padding: 8px 0;
+}
+.soundbook-summary li img {
+  object-fit: contain;
+}
+.soundbook-summary li strong {
+  margin-left: auto;
+  font-size: 13px;
+}
+@media (max-width: 600px) {
+  .soundbook-header {
+    padding: 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 13px;
+  }
+  .soundbook-header > span {
+    width: 100%;
+    text-align: center;
+  }
+  .soundbook-card {
+    padding: 18px;
+    margin-top: 4px;
+    border-radius: 24px;
+  }
+  .soundbook-character {
+    padding: 16px;
+  }
+  .soundbook-dialog {
+    padding: 24px 18px;
+  }
+  .soundbook-actions button {
+    flex: 1;
+  }
+  .soundbook-summary .soundbook-actions {
+    flex-direction: column;
+  }
+}

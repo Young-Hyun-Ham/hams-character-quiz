@@ -13,8 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "한글 몬스터 | 캐릭터 퀴즈와 그리기",
-  description: "좋아하는 캐릭터의 이름을 따라 쓰고 도감 가이드로 그림을 그리는 어린이 놀이 학습",
+  title: "한글 몬스터 | 캐릭터 퀴즈와 그리기 | 어린이 놀이 학습",
+  description:
+    "좋아하는 캐릭터의 이름을 따라 쓰고 도감 가이드로 그림을 그리는 어린이 놀이 학습",
   applicationName: "한글 몬스터",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
