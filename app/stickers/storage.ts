@@ -26,6 +26,7 @@ export type ShopPurchase = {
   id: string;
   productId: string;
   name: string;
+  quantity?: number;
   cost: number;
   purchasedAt: string;
   completedAt: string | null;
@@ -107,12 +108,14 @@ export function purchases(data = readStore()) {
 export async function purchaseProduct(
   productId: string,
   name: string,
-  cost: number,
+  unitPrice: number,
+  quantity = 1,
 ) {
   return locked(() => {
     const data = readStore();
-    if (!Number.isSafeInteger(cost) || cost <= 0)
-      throw Error("상품 가격이 올바르지 않습니다.");
+    if (!Number.isSafeInteger(unitPrice) || unitPrice <= 0 || !Number.isSafeInteger(quantity) || quantity <= 0)
+      throw Error("상품 가격이나 수량이 올바르지 않습니다.");
+    const cost = unitPrice * quantity;
     if (balance(data) < cost) throw Error("스티커가 부족해요.");
     const id = crypto.randomUUID();
     const purchasedAt = new Date().toISOString();
@@ -124,7 +127,7 @@ export async function purchaseProduct(
     });
     data.purchases = [
       ...(data.purchases ?? []),
-      { id, productId, name, cost, purchasedAt, completedAt: null },
+      { id, productId, name, quantity, cost, purchasedAt, completedAt: null },
     ];
     writeStore(data);
     window.dispatchEvent(new Event("shop-changed"));

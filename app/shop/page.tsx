@@ -13,6 +13,7 @@ import { SHOP_PRODUCTS } from "./products";
 import "./shop.css";
 import "./shop-sprite.css";
 import "./shop-actions.css";
+import "./shop-quantity.css";
 
 function subscribe(callback: () => void) {
   window.addEventListener("storage", callback);
@@ -43,13 +44,15 @@ export default function ShopPage() {
       : { balance: 0, purchases: [] };
   const [mode, setMode] = useState<"child" | "parent">("child");
   const [selected, setSelected] = useState<string | null>(null);
+  const [quantity, setQuantity] = useState(1);
   const [message, setMessage] = useState("");
 
   async function addProduct(product: (typeof SHOP_PRODUCTS)[number]) {
     try {
-      await purchaseProduct(product.id, product.name, product.price);
-      setMessage(`${product.name}을(를) 담았어요! 부모님께 보여 주세요.`);
+      await purchaseProduct(product.id, product.name, product.price, quantity);
+      setMessage(`${product.name} ${quantity}개를 담았어요! 부모님께 보여 주세요.`);
       setSelected(null);
+      setQuantity(1);
     } catch (error) {
       setMessage(
         error instanceof Error ? error.message : "상품을 담지 못했어요.",
@@ -111,12 +114,14 @@ export default function ShopPage() {
         )}
         {mode === "child" ? (
           <div className="product-grid">
-            {SHOP_PRODUCTS.map((product, index) => (
+            {SHOP_PRODUCTS.map((product, index) => {
+              const maximum = Math.floor(data.balance / product.price);
+              return (
               <article className="product-card" key={product.id}>
                 <button
                   type="button"
                   className="product-select"
-                  onClick={() => setSelected(product.id)}
+                  onClick={() => { setSelected(product.id); setQuantity(1); }}
                   aria-label={`${product.name}, 스티커 ${product.price}개`}
                 >
                   <span
@@ -135,20 +140,15 @@ export default function ShopPage() {
                 </button>
                 {selected === product.id && (
                   <div className="product-overlay">
-                    <div />
-                    <button
-                      type="button"
-                      onClick={() => void addProduct(product)}
-                    >
-                      상품담기
-                    </button>
-                    <button type="button" onClick={() => setSelected(null)}>
-                      닫기
-                    </button>
+                    <div className="product-overlay-shade" />
+                    <div className="product-quantity"><label htmlFor={`quantity-${product.id}`}>수량</label><input id={`quantity-${product.id}`} type="number" min="1" max={Math.max(1, maximum)} value={quantity} onChange={(event) => setQuantity(Math.max(1, Math.min(Math.max(1, maximum), Number.parseInt(event.target.value, 10) || 1)))} /><button type="button" disabled={maximum < 1} onClick={() => setQuantity(Math.max(1, maximum))}>전부</button></div>
+                    <strong className="product-total">{product.id === "cash" ? `${quantity * 10}원` : `⭐ ${product.price * quantity}개`}</strong>
+                    <div className="product-overlay-actions"><button type="button" disabled={maximum < 1 || quantity > maximum} onClick={() => void addProduct(product)}>상품담기</button><button type="button" onClick={() => { setSelected(null); setQuantity(1); }}>닫기</button></div>
                   </div>
                 )}
               </article>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <PurchaseList
@@ -193,7 +193,7 @@ function PurchaseList({
           pending.map((item) => (
             <article className="purchase-row" key={item.id}>
               <div>
-                <strong>{item.name}</strong>
+                <strong>{item.name} × {item.quantity ?? 1}{item.productId === "cash" ? ` (${item.cost * 10}원)` : ""}</strong>
                 <span>
                   ⭐ {item.cost}개 ·{" "}
                   {new Date(item.purchasedAt).toLocaleString("ko-KR")}
@@ -223,7 +223,7 @@ function PurchaseList({
           {completed.map((item) => (
             <article className="purchase-row" key={item.id}>
               <div>
-                <strong>{item.name}</strong>
+                <strong>{item.name} × {item.quantity ?? 1}{item.productId === "cash" ? ` (${item.cost * 10}원)` : ""}</strong>
                 <span>⭐ {item.cost}개</span>
               </div>
               <em>전달 완료</em>
