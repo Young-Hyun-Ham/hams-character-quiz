@@ -282,7 +282,11 @@ export default function SoundbookGame({
       </header>
       {finished ? (
         <section className="soundbook-card soundbook-summary">
-          <StickerReward kind="soundbook" total={answers.length} correct={answers.filter(answer => answer.correct).length} />
+          <StickerReward
+            kind="soundbook"
+            total={answers.length}
+            correct={answers.filter((answer) => answer.correct).length}
+          />
           <span className="soundbook-eyebrow">오늘의 목소리 놀이 끝!</span>
           <h1>참 잘했어요! 🎉</h1>
           <p>

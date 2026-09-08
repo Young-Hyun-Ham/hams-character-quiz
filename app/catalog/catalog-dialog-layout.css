@@ -1,0 +1,19 @@
+.catalog-grid .catalog-card-open {
+  position: static;
+  inset: auto;
+  width: 100%;
+  height: auto;
+  padding: 0;
+  border-radius: 14px;
+}
+.catalog-grid article.is-acquired {
+  min-height: 216px;
+}
+@media (max-width: 480px) {
+  .catalog-grid .catalog-card-open {
+    padding: 0;
+  }
+  .catalog-grid article.is-acquired {
+    min-height: 190px;
+  }
+}

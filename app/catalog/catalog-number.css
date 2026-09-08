@@ -1,0 +1,20 @@
+.catalog-grid article {
+  position: relative;
+}
+.catalog-card-number {
+  position: absolute;
+  top: 9px;
+  right: 11px;
+  z-index: 1;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #eef2f6e6;
+  color: #667386;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+.catalog-grid article.is-acquired .catalog-card-number {
+  background: #fff0f5;
+  color: #c44670;
+}

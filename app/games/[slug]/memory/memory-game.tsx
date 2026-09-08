@@ -155,7 +155,17 @@ export default function MemoryGame({
         </div>
         {complete && (
           <section className="memory-complete" aria-label="게임 완료 결과">
-            <StickerReward kind={level.id === 1 ? "memory1" : level.id === 2 ? "memory2" : "memory3"} total={level.pairs} correct={pairs} />
+            <StickerReward
+              kind={
+                level.id === 1
+                  ? "memory1"
+                  : level.id === 2
+                    ? "memory2"
+                    : "memory3"
+              }
+              total={level.pairs}
+              correct={pairs}
+            />
             <span aria-hidden="true">🏆</span>
             <h2>{level.pairs}쌍 모두 찾았어요!</h2>
             <p>{state.moves}번 도전해서 성공했어요.</p>

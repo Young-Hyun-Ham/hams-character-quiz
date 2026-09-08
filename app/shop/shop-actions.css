@@ -1,0 +1,12 @@
+.purchase-actions {
+  display: flex;
+  gap: 7px;
+}
+.purchase-row .purchase-cancel {
+  background: #e45d67;
+}
+@media (max-width: 480px) {
+  .purchase-actions {
+    flex-direction: column;
+  }
+}

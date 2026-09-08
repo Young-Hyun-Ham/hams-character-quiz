@@ -7,8 +7,17 @@ import { memoryLevels, type MemoryLevelId } from "../games/memory-levels";
 import "../games/game-picker.css";
 import { CharacterType } from "../types";
 
-const TitleIcons = [ "🃏", "🌟", "🎈", "🧩", "🎯", "🚀", "🎵", "🌈", "🎁" ];
-const gameKinds: { id: string; label: string; order: number; title: string; description: string; icon: string; status: string; slugs: CharacterType[] }[] = [
+const TitleIcons = ["🃏", "🌟", "🎈", "🧩", "🎯", "🚀", "🎵", "🌈", "🎁"];
+const gameKinds: {
+  id: string;
+  label: string;
+  order: number;
+  title: string;
+  description: string;
+  icon: string;
+  status: string;
+  slugs: CharacterType[];
+}[] = [
   {
     id: "memory",
     label: "GAME 01",
@@ -20,14 +29,14 @@ const gameKinds: { id: string; label: string; order: number; title: string; desc
     slugs: ["pokemon", "teenieping", "wishcat", "mystery-apt", "cinnamoroll"],
   },
   {
-    id: "xxx",
+    id: "pokeball",
     label: "GAME 02",
     order: 2,
     title: "새로운 게임",
     description: "곧 만나요!",
     icon: TitleIcons[1],
-    status: "upcoming",
-    slugs: ["pokemon", "teenieping", "wishcat", "mystery-apt", "cinnamoroll"],
+    status: "available",
+    slugs: ["pokemon"],
   },
   {
     id: "xxx2",
@@ -39,7 +48,7 @@ const gameKinds: { id: string; label: string; order: number; title: string; desc
     status: "upcoming",
     slugs: ["pokemon", "teenieping", "wishcat", "mystery-apt", "cinnamoroll"],
   },
-]
+];
 
 export function GamePicker({
   world,
@@ -118,7 +127,9 @@ export function GamePicker({
           ×
         </button>
       </div>
-      <span className="game-picker-kicker">{world.slug}:{world.title} 게임 놀이터</span>
+      <span className="game-picker-kicker">
+        {world.slug}:{world.title} 게임 놀이터
+      </span>
       <h2 id="game-picker-title">
         {showLevels ? "같은 그림 찾기 · 레벨 선택" : "어떤 게임을 해볼까요?"}
       </h2>
@@ -158,42 +169,65 @@ export function GamePicker({
         </div>
       ) : (
         <div className="game-picker-grid" aria-label="9개의 게임">
-          {gameKinds.map((game, index) => 
+          {gameKinds.map((game, index) =>
             game.status === "available" ? (
               game.slugs.includes(world.slug) ? (
-                <button
-                  ref={memoryButtonRef}
-                  type="button"
-                  className="game-picker-card available"
-                  onClick={() => setShowLevels(true)}
-                >
-                  <small>GAME {String(index + 1).padStart(2, "0")}</small>
-                  <span className="game-picker-icon" aria-hidden="true">
-                    {game.icon}
-                  </span>
-                  <strong>{game.title}</strong>
-                  <span className="game-picker-description">{game.description}</span>
-                  <b>레벨 선택 →</b>
-                </button>
-              ) : null)
-            : 
-              game.slugs.includes(world.slug) ? (
-                <section
-                  className="game-picker-card upcoming"
-                  key={index}
-                  aria-label={`게임 ${index + 1}, 준비 중`}
-                >
-                  <small>GAME {String(index + 1).padStart(2, "0")}</small>
-                  <span className="game-picker-icon" aria-hidden="true">
-                    {game.icon}
-                  </span>
-                  <strong>{game.title}</strong>
-                  <span className="game-picker-description">{game.description}</span>
-                  <b>준비 중</b>
-                </section>
-              )
-            : null)
-          }
+                game.id === "pokeball" ? (
+                  <Link
+                    key={index}
+                    className="game-picker-card available"
+                    href="/games/pokemon/pokeball"
+                  >
+                    <small>GAME 02</small>
+                    <span className="game-picker-icon" aria-hidden="true">
+                      🔴
+                    </span>
+                    <strong>몬스터볼 던지기</strong>
+                    <span className="game-picker-description">
+                      몬스터볼 수를 맞추고
+                      <br />
+                      10을 만들어 포켓몬을 잡아요
+                    </span>
+                    <b>게임 시작 →</b>
+                  </Link>
+                ) : (
+                  <button
+                    ref={memoryButtonRef}
+                    key={index}
+                    type="button"
+                    className="game-picker-card available"
+                    onClick={() => setShowLevels(true)}
+                  >
+                    <small>GAME {String(index + 1).padStart(2, "0")}</small>
+                    <span className="game-picker-icon" aria-hidden="true">
+                      {game.icon}
+                    </span>
+                    <strong>{game.title}</strong>
+                    <span className="game-picker-description">
+                      {game.description}
+                    </span>
+                    <b>레벨 선택 →</b>
+                  </button>
+                )
+              ) : null
+            ) : game.slugs.includes(world.slug) ? (
+              <section
+                className="game-picker-card upcoming"
+                key={index}
+                aria-label={`게임 ${index + 1}, 준비 중`}
+              >
+                <small>GAME {String(index + 1).padStart(2, "0")}</small>
+                <span className="game-picker-icon" aria-hidden="true">
+                  {game.icon}
+                </span>
+                <strong>{game.title}</strong>
+                <span className="game-picker-description">
+                  {game.description}
+                </span>
+                <b>준비 중</b>
+              </section>
+            ) : null,
+          )}
         </div>
       )}
     </dialog>

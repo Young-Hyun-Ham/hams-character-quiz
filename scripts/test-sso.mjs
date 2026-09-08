@@ -116,6 +116,7 @@ test("SSO routes validate state, exchange codes, protect session cookies, restor
     const logoutUrl = new URL(logout.headers.get("location"));
     assert.equal(logoutUrl.origin, ssoUrl);
     assert.equal(logoutUrl.pathname, "/sso/logout");
+    assert.equal(logoutUrl.searchParams.get("redirect_to_service"), "true");
     saveCookies(logout);
     assert.equal(jar.size, 0);
     assert.deepEqual(await (await request("/api/auth/me")).json(), { user: null });

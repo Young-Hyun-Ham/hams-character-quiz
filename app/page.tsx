@@ -158,10 +158,7 @@ export default function Home() {
       </section>
       <footer className="home-footer">
         <span>♥</span> 매일 10분, 즐거운 한글 습관
-        <Link
-          className={`inquiry-link`}
-          href="/inquiries"
-        >
+        <Link className={`inquiry-link`} href="/inquiries">
           문의하기
         </Link>
       </footer>

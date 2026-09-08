@@ -1,14 +1,24 @@
-
 import { pokemonCharacters } from "./pokemon-data.generated";
 import { CharacterType } from "./types";
 
 export type Character = {
   id?: number;
   season?: number;
+  rarity?: "rare";
   name: string;
   image: string;
   hint: string;
 };
+
+const rarePokemonCharacters: Character[] = [
+  {
+    id: 90001,
+    name: "별빛냥",
+    image: "/pokemon/catalog/9000101.png",
+    hint: "별",
+    rarity: "rare",
+  },
+];
 export type QuizWorld = {
   slug: CharacterType;
   title: string;
@@ -384,7 +394,7 @@ const quizWorldData: QuizWorld[] = [
     softColor: "#fff1e9",
     accent: "#ffb92e",
     cover: "https://data1.pokemonkorea.co.kr/newdata/pokedex/mid/002501.png",
-    characters: pokemonCharacters,
+    characters: [...rarePokemonCharacters, ...pokemonCharacters],
   },
   {
     slug: "teenieping",
@@ -1394,4 +1404,3 @@ export const quizWorlds: QuizWorld[] = quizWorldData.map((world) =>
 export function getQuizWorld(slug: string) {
   return quizWorlds.find((world) => world.slug === slug);
 }
-

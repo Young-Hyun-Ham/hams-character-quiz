@@ -455,7 +455,7 @@ a {
 }
 .home-footer a {
   margin-left: auto; /* 만약 flex-direction 변경이나 개별 밀어내기가 필요할 때를 대비 */
-  color: inherit;    /* 필요 시 링크 색상 유지 */
+  color: inherit; /* 필요 시 링크 색상 유지 */
   text-decoration: none;
 }
 .sky-decoration {

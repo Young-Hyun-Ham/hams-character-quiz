@@ -1,5 +1,7 @@
 "use client";
 import { StickerReward } from "../../components/sticker-reward";
+import { collectCard } from "../../catalog/storage";
+import { isAuthenticated, LoginPromptModal } from "../../components/login-prompt-modal";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
@@ -24,7 +26,7 @@ type QuizEvent = {
   probability: number;
 };
 const QUESTION_COUNT = 10;
-const PASSING_SCORE = 95;
+const PASSING_SCORE = 90;
 const OUTSIDE_GUIDE_PENALTY = 100;
 const INSIDE_GUIDE_PENALTY = 50;
 const MONSTER_DIALOGUES = [
@@ -132,6 +134,7 @@ export default function QuizGame({
   const [showAnswer, setShowAnswer] = useState(false);
   const [strokes, setStrokes] = useState(0);
   const [answers, setAnswers] = useState<Answer[]>([]);
+  const [loginPromptOpen, setLoginPromptOpen] = useState(false);
   const [finished, setFinished] = useState(false);
   const [similarityScore, setSimilarityScore] = useState(0);
   const [recognizedCorrect, setRecognizedCorrect] = useState<boolean | null>(
@@ -254,7 +257,12 @@ export default function QuizGame({
       return candidates[Math.floor(Math.random() * candidates.length)];
     });
   };
-  const grade = (correct: boolean) => {
+  const grade = async (correct: boolean) => {
+    if (correct) {
+      if (await isAuthenticated()) {
+        try { collectCard(world.slug, current.image); } catch { /* Keep playing if storage is unavailable. */ }
+      } else setLoginPromptOpen(true);
+    }
     const nextAnswers = [...answers, { character: current, correct }];
     setAnswers(nextAnswers);
     if (index === questions.length - 1) {
@@ -432,7 +440,11 @@ export default function QuizGame({
         }
       >
         <section className="result-card">
-          <StickerReward kind="quiz" total={answers.length} correct={correctCount} />
+          <StickerReward
+            kind="quiz"
+            total={answers.length}
+            correct={correctCount}
+          />
           <div className="result-confetti">✦　★　✧</div>
           <span className="result-badge">학습 완료!</span>
           <h1>
@@ -490,6 +502,7 @@ export default function QuizGame({
             <Link href="/">처음으로 돌아가기</Link>
           </div>
         </section>
+        <LoginPromptModal open={loginPromptOpen} onClose={() => setLoginPromptOpen(false)} />
       </main>
     );
   }
@@ -647,8 +660,7 @@ export default function QuizGame({
               onClick={checkHandwriting}
               disabled={!strokes}
             >
-              자동 채점하기{" "}
-              <span>→</span>
+              자동 채점하기 <span>→</span>
             </button>
           </div>
         ) : (
@@ -674,6 +686,7 @@ export default function QuizGame({
           </div>
         )}
       </section>
+      <LoginPromptModal open={loginPromptOpen} onClose={() => setLoginPromptOpen(false)} />
     </main>
   );
 }

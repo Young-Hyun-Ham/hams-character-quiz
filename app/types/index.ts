@@ -1,2 +1,2 @@
-
-export type CharacterType = "pokemon" | "teenieping" | "wishcat" | "mystery-apt" | "cinnamoroll";
+export type CharacterType =
+  "pokemon" | "teenieping" | "wishcat" | "mystery-apt" | "cinnamoroll";
