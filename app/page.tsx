@@ -31,6 +31,7 @@ export default function Home() {
     () => "web",
   );
   const [selectedLayout, setSelectedLayout] = useState<LayoutMode | null>(null);
+  const [orientationNotice, setOrientationNotice] = useState<string | null>(null);
   const [selectedWorld, setSelectedWorld] = useState<QuizWorld | null>(null);
   const [gamesOpen, setGamesOpen] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -41,6 +42,37 @@ export default function Home() {
     (layoutMode === "web"
       ? `/quiz/${selectedWorld.slug}`
       : `/quiz/${selectedWorld.slug}?layout=${layoutMode}`);
+
+  async function selectLayoutMode(mode: LayoutMode) {
+    setSelectedLayout(mode);
+    setOrientationNotice(null);
+    const orientation = screen.orientation as
+      | {
+          lock?: (mode: "landscape") => Promise<void>;
+          unlock?: () => void;
+        }
+      | undefined;
+
+    if (mode !== "tablet") {
+      orientation?.unlock?.();
+      return;
+    }
+
+    if (typeof orientation?.lock !== "function") {
+      setOrientationNotice(
+        "이 브라우저에서는 자동 회전을 지원하지 않아요. 태블릿을 가로로 돌려주세요.",
+      );
+      return;
+    }
+
+    try {
+      await orientation.lock("landscape");
+    } catch {
+      setOrientationNotice(
+        "화면을 자동으로 돌릴 수 없어요. 태블릿을 가로로 돌려주세요.",
+      );
+    }
+  }
 
   useEffect(() => {
     if (!selectedWorld || gamesOpen) return;
@@ -80,7 +112,7 @@ export default function Home() {
             type="button"
             className={layoutMode === "web" ? "active" : ""}
             aria-pressed={layoutMode === "web"}
-            onClick={() => setSelectedLayout("web")}
+            onClick={() => void selectLayoutMode("web")}
           >
             <strong>웹형</strong>
             <small>기본</small>
@@ -89,7 +121,7 @@ export default function Home() {
             type="button"
             className={layoutMode === "tablet" ? "active" : ""}
             aria-pressed={layoutMode === "tablet"}
-            onClick={() => setSelectedLayout("tablet")}
+            onClick={() => void selectLayoutMode("tablet")}
           >
             <strong>가로형</strong>
             <small>태블릿</small>
@@ -98,12 +130,17 @@ export default function Home() {
             type="button"
             className={layoutMode === "mobile" ? "active" : ""}
             aria-pressed={layoutMode === "mobile"}
-            onClick={() => setSelectedLayout("mobile")}
+            onClick={() => void selectLayoutMode("mobile")}
           >
             <strong>세로형</strong>
             <small>모바일</small>
           </button>
         </div>
+        {orientationNotice && (
+          <p className="orientation-notice" role="status">
+            {orientationNotice}
+          </p>
+        )}
       </section>
       <section className="world-grid" aria-label="캐릭터 세계 선택">
         {quizWorlds.map((world, index) => (

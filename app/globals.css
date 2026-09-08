@@ -73,6 +73,12 @@ a {
   color: #ff7162;
   box-shadow: 0 3px 10px rgba(48, 57, 76, 0.11);
 }
+.hero .orientation-notice {
+  margin: 10px auto 0;
+  color: #cc5147;
+  font-size: 13px;
+  font-weight: 700;
+}
 @media (max-width: 380px) {
   .layout-picker {
     width: 100%;
