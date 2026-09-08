@@ -141,9 +141,9 @@ export default function ShopPage() {
                 {selected === product.id && (
                   <div className="product-overlay">
                     <div className="product-overlay-shade" />
-                    <div className="product-quantity"><label htmlFor={`quantity-${product.id}`}>수량</label><input id={`quantity-${product.id}`} type="number" min="1" max={Math.max(1, maximum)} value={quantity} onChange={(event) => setQuantity(Math.max(1, Math.min(Math.max(1, maximum), Number.parseInt(event.target.value, 10) || 1)))} /><button type="button" disabled={maximum < 1} onClick={() => setQuantity(Math.max(1, maximum))}>전부</button></div>
+                    <div className="product-quantity"><label htmlFor={`quantity-${product.id}`}>수량</label><input id={`quantity-${product.id}`} type="number" min="0" max={Math.max(0, maximum)} value={quantity} onKeyDown={(event) => { if (quantity === 0 && /^\d$/.test(event.key)) { event.preventDefault(); setQuantity(Math.min(maximum, Number(event.key))); } }} onChange={(event) => { const input = event.target.value; const next = input === "" ? 0 : Math.max(0, Math.min(maximum, Number.parseInt(input, 10) || 0)); event.currentTarget.value = String(next); setQuantity(next); }} /><button type="button" disabled={maximum < 1} onClick={() => setQuantity(maximum)}>전부</button></div>
                     <strong className="product-total">{product.id === "cash" ? `${quantity * 10}원` : `⭐ ${product.price * quantity}개`}</strong>
-                    <div className="product-overlay-actions"><button type="button" disabled={maximum < 1 || quantity > maximum} onClick={() => void addProduct(product)}>상품담기</button><button type="button" onClick={() => { setSelected(null); setQuantity(1); }}>닫기</button></div>
+                    <div className="product-overlay-actions"><button type="button" disabled={quantity < 1 || maximum < 1 || quantity > maximum} onClick={() => void addProduct(product)}>상품담기</button><button type="button" onClick={() => { setSelected(null); setQuantity(1); }}>닫기</button></div>
                   </div>
                 )}
               </article>
