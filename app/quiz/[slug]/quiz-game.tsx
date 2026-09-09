@@ -1,6 +1,7 @@
 "use client";
 import { StickerReward } from "../../components/sticker-reward";
 import { collectCard } from "../../catalog/storage";
+import { gameRewardConfig } from "../../../lib/game-rewards";
 import {
   isAuthenticated,
   LoginPromptModal,
@@ -262,13 +263,16 @@ export default function QuizGame({
   };
   const grade = async (correct: boolean) => {
     if (correct) {
-      if (await isAuthenticated()) {
-        try {
-          collectCard(world.slug, current.image);
-        } catch {
-          /* Keep playing if storage is unavailable. */
-        }
-      } else setLoginPromptOpen(true);
+      const roll = crypto.getRandomValues(new Uint32Array(1))[0] / 0x100000000;
+      if (roll < gameRewardConfig.quizCapture.chance) {
+        if (await isAuthenticated()) {
+          try {
+            await collectCard(world.slug, current.image);
+          } catch {
+            /* Keep playing if storage is unavailable. */
+          }
+        } else setLoginPromptOpen(true);
+      }
     }
     const nextAnswers = [...answers, { character: current, correct }];
     setAnswers(nextAnswers);

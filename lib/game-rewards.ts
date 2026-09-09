@@ -56,6 +56,11 @@ export const gameRewardConfig = {
     pokemonBag: { amount: 1, requiredTotal: 1, minimumCorrect: 1, requirePerfect: true, chance: 0.2 },
   },
 
+  quizCapture: {
+    /** 이름 퀴즈에서 한 문제를 맞힌 뒤 해당 캐릭터 도감을 획득할 확률입니다. */
+    chance: 0.2,
+  },
+
   pokemonCapture: {
     /**
      * 던진 몬스터볼 1개당 포켓몬 포획 확률입니다.

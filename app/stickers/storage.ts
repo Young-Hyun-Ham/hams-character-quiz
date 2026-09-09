@@ -44,37 +44,37 @@ type Data = {
   purchases?: ShopPurchase[];
   admin: { salt: string; hash: string; failures: number } | null;
 };
+let cachedData: Data = {
+  configVersion: gameRewardConfig.version,
+  rules: { ...RULES },
+  entries: [],
+  purchases: [],
+  admin: null,
+};
 export function readStore(): Data {
-  const raw = localStorage.getItem(KEY);
-  if (!raw)
-    return {
-      configVersion: gameRewardConfig.version,
-      rules: { ...RULES },
-      entries: [],
-      purchases: [],
-      admin: null,
-    };
-  const data = JSON.parse(raw) as Data;
-  if (!data || !data.rules || !Array.isArray(data.entries))
-    throw Error("저장 데이터를 읽지 못했어요.");
-  if (data.configVersion !== gameRewardConfig.version) {
-    data.configVersion = gameRewardConfig.version;
-    data.rules = { ...RULES };
-  }
-  if (
-    !Object.keys(RULES).every(
-      (key) =>
-        Number.isInteger(data.rules[key as RewardKind]) &&
-        data.rules[key as RewardKind] >= 0 &&
-        data.rules[key as RewardKind] <= 999,
-    )
-  )
-    throw Error("저장 데이터를 읽지 못했어요.");
-  return data;
+  return cachedData;
 }
-function writeStore(data: Data) {
-  localStorage.setItem(KEY, JSON.stringify(data));
+function applyState(data: Data) {
+  cachedData = data;
   window.dispatchEvent(new Event("stickers-changed"));
+}
+async function request(action: Record<string, unknown>) {
+  const response = await fetch("/api/stickers", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify(action) });
+  const payload = await response.json();
+  if (!response.ok) throw Error(payload.error === "login_required" ? "로그인이 필요합니다." : payload.error === "not_enough_stickers" ? "스티커가 부족해요." : "스티커 정보를 저장하지 못했어요.");
+  if (payload.state) applyState(payload.state as Data);
+  return payload;
+}
+export async function refreshStore() {
+  const response = await fetch("/api/stickers", { cache: "no-store", credentials: "same-origin" });
+  if (!response.ok) {
+    if (response.status === 401) applyState({ configVersion: gameRewardConfig.version, rules: { ...RULES }, entries: [], purchases: [], admin: null });
+    else throw Error("스티커 정보를 불러오지 못했어요.");
+  } else {
+    const payload = await response.json() as { state: Data };
+    applyState(payload.state);
+  }
+  return cachedData;
 }
 export function balance(data = readStore()) {
   return data.entries.reduce((total, entry) => total + entry.amount, 0);
@@ -93,18 +93,9 @@ async function locked<T>(action: () => Promise<T> | T): Promise<T> {
   return action();
 }
 export async function award(id: string, kind: RewardKind) {
-  return locked(() => {
-    const data = readStore();
-    const prior = data.entries.find((entry) => entry.id === id);
-    if (prior) return { amount: prior.amount, balance: balance(data) };
-    const chance = gameRewardConfig.stickerRewards[kind].chance;
-    const chancePassed =
-      chance >= 1 ||
-      crypto.getRandomValues(new Uint32Array(1))[0] / 0x100000000 < chance;
-    const amount = chancePassed ? data.rules[kind] : 0;
-    data.entries.push({ id, kind, amount, at: new Date().toISOString() });
-    writeStore(data);
-    return { amount, balance: balance(data) };
+  return locked(async () => {
+    const payload = await request({ action: "award", id, kind });
+    return { amount: payload.amount as number, balance: payload.balance as number };
   });
 }
 export function purchases(data = readStore()) {
@@ -116,8 +107,7 @@ export async function purchaseProduct(
   unitPrice: number,
   quantity = 1,
 ) {
-  return locked(() => {
-    const data = readStore();
+  return locked(async () => {
     if (
       !Number.isSafeInteger(unitPrice) ||
       unitPrice <= 0 ||
@@ -125,51 +115,24 @@ export async function purchaseProduct(
       quantity <= 0
     )
       throw Error("상품 가격이나 수량이 올바르지 않습니다.");
-    const cost = unitPrice * quantity;
-    if (balance(data) < cost) throw Error("스티커가 부족해요.");
-    const id = crypto.randomUUID();
-    const purchasedAt = new Date().toISOString();
-    data.entries.push({
-      id: `shop:${id}`,
-      kind: "shop",
-      amount: -cost,
-      at: purchasedAt,
-    });
-    data.purchases = [
-      ...(data.purchases ?? []),
-      { id, productId, name, quantity, cost, purchasedAt, completedAt: null },
-    ];
-    writeStore(data);
+    void name; void unitPrice;
+    const payload = await request({ action: "purchase", productId, quantity });
     window.dispatchEvent(new Event("shop-changed"));
-    return { balance: balance(data), id };
+    return { balance: payload.balance as number, id: payload.id as string };
   });
 }
 export async function completePurchase(id: string) {
-  return locked(() => {
-    const data = readStore();
-    const purchase = data.purchases?.find((item) => item.id === id);
-    if (!purchase || purchase.completedAt || purchase.canceledAt) return false;
-    purchase.completedAt = new Date().toISOString();
-    writeStore(data);
+  return locked(async () => {
+    const payload = await request({ action: "complete", id });
     window.dispatchEvent(new Event("shop-changed"));
-    return true;
+    return payload.changed as boolean;
   });
 }
 export async function cancelPurchase(id: string) {
-  return locked(() => {
-    const data = readStore();
-    const purchase = data.purchases?.find((item) => item.id === id);
-    if (!purchase || purchase.completedAt || purchase.canceledAt) return false;
-    purchase.canceledAt = new Date().toISOString();
-    data.entries.push({
-      id: `shop-refund:${id}`,
-      kind: "shop",
-      amount: purchase.cost,
-      at: purchase.canceledAt,
-    });
-    writeStore(data);
+  return locked(async () => {
+    const payload = await request({ action: "cancel", id });
     window.dispatchEvent(new Event("shop-changed"));
-    return true;
+    return payload.changed as boolean;
   });
 }
 async function digest(pin: string, salt: string) {
@@ -208,7 +171,7 @@ export async function unlock(pin: string, confirmation?: string) {
       if (data.admin.failures >= 5) throw Error("관리자에게 문의 하세요.");
       if ((await digest(pin, data.admin.salt)) !== data.admin.hash) {
         data.admin.failures += 1;
-        writeStore(data);
+        await request({ action: "replace", state: data });
         throw Error(
           data.admin.failures >= 5
             ? "관리자에게 문의 하세요."
@@ -217,7 +180,7 @@ export async function unlock(pin: string, confirmation?: string) {
       }
       data.admin.failures = 0;
     }
-    writeStore(data);
+    await request({ action: "replace", state: data });
     authorizedHash = data.admin.hash;
   });
 }
@@ -225,7 +188,7 @@ export function lockAdmin() {
   authorizedHash = null;
 }
 export async function saveRules(rules: typeof RULES) {
-  return locked(() => {
+  return locked(async () => {
     const data = readStore();
     if (
       !authorizedHash ||
@@ -240,6 +203,6 @@ export async function saveRules(rules: typeof RULES) {
     )
       throw Error("스티커 수량은 0~999의 정수로 입력해 주세요.");
     data.rules = { ...rules };
-    writeStore(data);
+    await request({ action: "replace", state: data });
   });
 }

@@ -99,7 +99,7 @@ export default function MagicDessertGame({
       return;
     }
     try {
-      collectCard(world.slug, host.image);
+      await collectCard(world.slug, host.image);
     } catch {
       /* 게임 완료는 유지합니다. */
     }

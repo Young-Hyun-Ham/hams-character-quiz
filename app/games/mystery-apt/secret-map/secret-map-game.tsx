@@ -114,7 +114,7 @@ export default function SecretMapGame({
       return;
     }
     try {
-      collectCard("mystery-apt", ghost.image);
+      await collectCard("mystery-apt", ghost.image);
     } catch {
       /* 게임 완료는 유지합니다. */
     }

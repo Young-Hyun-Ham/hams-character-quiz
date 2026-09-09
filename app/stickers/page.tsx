@@ -6,6 +6,7 @@ import {
   LABELS,
   lockAdmin,
   readStore,
+  refreshStore,
   RULES,
   saveRules,
   unlock,
@@ -26,9 +27,10 @@ export default function StickersPage() {
   const input = useRef<HTMLInputElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
-    function load() {
+    async function load() {
       lockAdmin();
       try {
+        await refreshStore();
         const data = readStore();
         setRules(data.rules);
         setCount(balance(data));
@@ -44,15 +46,13 @@ export default function StickersPage() {
       } catch {
         setMode("error");
         setMessage(
-          "저장 데이터를 읽지 못했어요. 브라우저 저장 공간을 확인해 주세요.",
+          "서버에서 스티커 정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.",
         );
       }
     }
-    load();
-    window.addEventListener("storage", load);
+    void load();
     return () => {
       lockAdmin();
-      window.removeEventListener("storage", load);
     };
   }, []);
   useEffect(() => {
@@ -108,7 +108,7 @@ export default function StickersPage() {
       <section className="stickers-card">
         <span>⭐ STICKERS</span>
         <h1>스티커관리</h1>
-        <p>이 브라우저에서 모은 스티커와 지급 수량을 관리해요.</p>
+        <p>로그인한 계정에 저장된 스티커와 지급 수량을 관리해요.</p>
         {mode === "loading" ? (
           <p>저장 정보를 확인하고 있어요…</p>
         ) : mode === "error" ? (
@@ -195,8 +195,7 @@ export default function StickersPage() {
           </form>
         )}
         <small>
-          현재 스티커와 암호는 이 브라우저에만 저장돼요. 저장 데이터를 삭제하면
-          초기화되며 다른 기기와 공유되지 않아요.
+          스티커, 구매 내역과 관리자 설정은 로그인한 계정의 서버 데이터로 저장돼요.
         </small>
       </section>
       <dialog

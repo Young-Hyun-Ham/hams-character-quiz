@@ -126,7 +126,7 @@ export default function BagSortGame({
     }
     if (wonCard) {
       try {
-        collectCard("pokemon", question.image);
+        await collectCard("pokemon", question.image);
       } catch {
         /* 게임 완료는 유지합니다. */
       }

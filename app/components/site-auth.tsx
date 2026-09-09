@@ -10,7 +10,7 @@ import {
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import type { HeaderUser } from "../types/auth";
-import { balance } from "../stickers/storage";
+import { balance, refreshStore } from "../stickers/storage";
 import "./site-auth.css";
 
 type AuthState = {
@@ -68,7 +68,10 @@ export function SiteAuth({
     accountKey !== null && openFor === accountKey && auth.status === "ready";
 
   useEffect(() => {
-    if (auth.status === "ready") onAuthenticatedChange?.(auth.user !== null);
+    if (auth.status === "ready") {
+      onAuthenticatedChange?.(auth.user !== null);
+      if (auth.user) void refreshStore().catch(() => undefined);
+    }
   }, [auth.status, auth.user, onAuthenticatedChange]);
 
   useEffect(() => {

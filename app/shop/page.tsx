@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useSyncExternalStore, type CSSProperties } from "react";
+import { useEffect, useState, useSyncExternalStore, type CSSProperties } from "react";
 import {
   balance,
   cancelPurchase,
   completePurchase,
   purchaseProduct,
   purchases,
+  refreshStore,
 } from "../stickers/storage";
 import { SHOP_PRODUCTS } from "./products";
 import "./shop.css";
@@ -46,6 +47,9 @@ export default function ShopPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [message, setMessage] = useState("");
+  useEffect(() => {
+    void refreshStore().catch(() => setMessage("스티커 정보를 불러오지 못했어요."));
+  }, []);
 
   async function addProduct(product: (typeof SHOP_PRODUCTS)[number]) {
     try {

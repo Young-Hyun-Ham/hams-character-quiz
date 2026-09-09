@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Character } from "../data";
-import { cardKey, readCollectedCards } from "./storage";
+import { cardKey, readCollectedCards, refreshCollectedCards } from "./storage";
 
 function subscribe(callback: () => void) {
   window.addEventListener("storage", callback);
@@ -38,6 +38,9 @@ export function CatalogGrid({
   const [selected, setSelected] = useState<Character | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const collected = new Set(saved ? saved.split("\n") : []);
+  useEffect(() => {
+    void refreshCollectedCards().catch(() => undefined);
+  }, []);
   const acquiredCount = allCharacters.filter((character) =>
     collected.has(cardKey(world, character.image)),
   ).length;

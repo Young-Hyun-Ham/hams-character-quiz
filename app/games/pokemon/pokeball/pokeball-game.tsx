@@ -173,7 +173,7 @@ export default function PokeballGame({
       return;
     }
     try {
-      collectCard("pokemon", character.image);
+      await collectCard("pokemon", character.image);
     } catch {
       /* The game still completes without storage. */
     }
