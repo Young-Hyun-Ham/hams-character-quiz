@@ -17,6 +17,8 @@ const gameKinds: {
   icon: string;
   status: string;
   slugs: CharacterType[];
+  href?: string;
+  actionLabel: string;
 }[] = [
   {
     id: "memory",
@@ -27,26 +29,79 @@ const gameKinds: {
     icon: TitleIcons[0],
     status: "available",
     slugs: ["pokemon", "teenieping", "wishcat", "mystery-apt", "cinnamoroll"],
+    actionLabel: "레벨 선택 →",
   },
   {
     id: "pokeball",
     label: "GAME 02",
     order: 2,
-    title: "새로운 게임",
-    description: "곧 만나요!",
-    icon: TitleIcons[1],
+    title: "몬스터볼 던지기",
+    description: "몬스터볼 수를 맞추고\n10을 만들어 포켓몬을 잡아요",
+    icon: "🔴",
     status: "available",
     slugs: ["pokemon"],
+    href: "/games/pokemon/pokeball",
+    actionLabel: "게임 시작 →",
   },
   {
-    id: "xxx2",
+    id: "ghost-password",
+    label: "GAME 02",
+    order: 2,
+    title: "귀신 퇴치 비밀번호",
+    description: "부적 계산과 수의 크기 비교로\n결계를 풀고 귀신을 정화해요",
+    icon: "🔮",
+    status: "available",
+    slugs: ["mystery-apt"],
+    href: "/games/mystery-apt/ghost-password",
+    actionLabel: "게임 시작 →",
+  },
+  {
+    id: "magic-dessert",
+    label: "GAME 02",
+    order: 2,
+    title: "마법 디저트 파티",
+    description: "10의 짝과 수 패턴을 찾아\n마법의 파티를 완성해요",
+    icon: "🍰",
+    status: "available",
+    slugs: ["teenieping", "wishcat", "cinnamoroll"],
+    href: "/games/[slug]/magic-dessert",
+    actionLabel: "게임 시작 →",
+  },
+  {
+    id: "pokemon-bag-sort",
     label: "GAME 03",
     order: 3,
-    title: "새로운 게임3",
-    description: "곧 만나요!",
-    icon: TitleIcons[2],
-    status: "upcoming",
-    slugs: ["pokemon", "teenieping", "wishcat", "mystery-apt", "cinnamoroll"],
+    title: "포켓몬 박사님의 가방 정리",
+    description: "포켓몬을 종류별로 나누고\n모두 몇 마리인지 세어 봐요",
+    icon: "🎒",
+    status: "available",
+    slugs: ["pokemon"],
+    href: "/games/pokemon/bag-sort",
+    actionLabel: "게임 시작 →",
+  },
+  {
+    id: "secret-map",
+    label: "GAME 03",
+    order: 3,
+    title: "마법의 비밀 지도",
+    description: "흩어진 도형 조각을 맞춰\n귀신이 숨은 장소를 찾아요",
+    icon: "🗺️",
+    status: "available",
+    slugs: ["mystery-apt"],
+    href: "/games/mystery-apt/secret-map",
+    actionLabel: "게임 시작 →",
+  },
+  {
+    id: "dessert-time",
+    label: "GAME 03",
+    order: 3,
+    title: "디저트 타임",
+    description: "시계 바늘을 움직여\n파티 약속 시간을 맞춰요",
+    icon: "🕒",
+    status: "available",
+    slugs: ["teenieping", "wishcat", "cinnamoroll"],
+    href: "/games/[slug]/dessert-time",
+    actionLabel: "게임 시작 →",
   },
 ];
 
@@ -169,67 +224,64 @@ export function GamePicker({
         </div>
       ) : (
         <div className="game-picker-grid" aria-label="9개의 게임">
-          {gameKinds.map((game, index) =>
-            game.status === "available" ? (
-              game.slugs.includes(world.slug) ? (
-                game.id === "pokeball" ? (
+          {gameKinds
+            .filter((game) => game.slugs.includes(world.slug))
+            .sort((left, right) => left.order - right.order)
+            .map((game) =>
+              game.status === "available" ? (
+                game.href ? (
                   <Link
-                    key={index}
+                    key={game.id}
                     className="game-picker-card available"
-                    href="/games/pokemon/pokeball"
+                    href={game.href.replace("[slug]", world.slug)}
                   >
-                    <small>GAME 02</small>
-                    <span className="game-picker-icon" aria-hidden="true">
-                      🔴
-                    </span>
-                    <strong>몬스터볼 던지기</strong>
-                    <span className="game-picker-description">
-                      몬스터볼 수를 맞추고
-                      <br />
-                      10을 만들어 포켓몬을 잡아요
-                    </span>
-                    <b>게임 시작 →</b>
+                    <GameCardContent game={game} />
                   </Link>
                 ) : (
                   <button
                     ref={memoryButtonRef}
-                    key={index}
+                    key={game.id}
                     type="button"
                     className="game-picker-card available"
                     onClick={() => setShowLevels(true)}
                   >
-                    <small>GAME {String(index + 1).padStart(2, "0")}</small>
-                    <span className="game-picker-icon" aria-hidden="true">
-                      {game.icon}
-                    </span>
-                    <strong>{game.title}</strong>
-                    <span className="game-picker-description">
-                      {game.description}
-                    </span>
-                    <b>레벨 선택 →</b>
+                    <GameCardContent game={game} />
                   </button>
                 )
-              ) : null
-            ) : game.slugs.includes(world.slug) ? (
-              <section
-                className="game-picker-card upcoming"
-                key={index}
-                aria-label={`게임 ${index + 1}, 준비 중`}
-              >
-                <small>GAME {String(index + 1).padStart(2, "0")}</small>
-                <span className="game-picker-icon" aria-hidden="true">
-                  {game.icon}
-                </span>
-                <strong>{game.title}</strong>
-                <span className="game-picker-description">
-                  {game.description}
-                </span>
-                <b>준비 중</b>
-              </section>
-            ) : null,
-          )}
+              ) : (
+                <section
+                  className="game-picker-card upcoming"
+                  key={game.id}
+                  aria-label={`${game.label}, 준비 중`}
+                >
+                  <GameCardContent game={game} />
+                </section>
+              ),
+            )}
         </div>
       )}
     </dialog>
+  );
+}
+
+function GameCardContent({ game }: { game: (typeof gameKinds)[number] }) {
+  const descriptionLines = game.description.split("\n");
+  return (
+    <>
+      <small>{game.label}</small>
+      <span className="game-picker-icon" aria-hidden="true">
+        {game.icon}
+      </span>
+      <strong>{game.title}</strong>
+      <span className="game-picker-description">
+        {descriptionLines.map((line, index) => (
+          <span key={line}>
+            {index > 0 && <br />}
+            {line}
+          </span>
+        ))}
+      </span>
+      <b>{game.actionLabel}</b>
+    </>
   );
 }

@@ -12,7 +12,10 @@ import {
 import type { Character } from "../../../data";
 import { collectCard } from "../../../catalog/storage";
 import { StickerReward } from "../../../components/sticker-reward";
-import { isAuthenticated, LoginPromptModal } from "../../../components/login-prompt-modal";
+import {
+  isAuthenticated,
+  LoginPromptModal,
+} from "../../../components/login-prompt-modal";
 import { gameRewardConfig } from "../../../../lib/game-rewards";
 import "../../../games/pokeball.css";
 import "../../../games/pokeball-arithmetic.css";
@@ -188,7 +191,13 @@ export default function PokeballGame({
       <header className="pokeball-header">
         <Link href="/">← 캐릭터 선택</Link>
         <strong>포켓몬 게임 센터</strong>
-        <button type="button" className="pokeball-catalog-button" onClick={() => void openCatalog()}>내 도감</button>
+        <button
+          type="button"
+          className="pokeball-catalog-button"
+          onClick={() => void openCatalog()}
+        >
+          내 도감
+        </button>
       </header>
       <section className="pokeball-panel">
         <span className="pokeball-kicker">GAME 02 · 몬스터볼 던지기</span>
@@ -397,7 +406,10 @@ export default function PokeballGame({
           <i />
         </span>
       )}
-      <LoginPromptModal open={loginPromptOpen} onClose={() => setLoginPromptOpen(false)} />
+      <LoginPromptModal
+        open={loginPromptOpen}
+        onClose={() => setLoginPromptOpen(false)}
+      />
     </main>
   );
 }

@@ -1,1 +1,48 @@
-.login-prompt-modal{position:fixed;inset:0;margin:auto;width:min(390px,calc(100% - 28px));max-height:calc(100dvh - 28px);padding:28px;border:3px solid #fff;border-radius:26px;background:#fff;color:#354057;box-shadow:0 24px 80px #17223873;text-align:center}.login-prompt-modal::backdrop{background:#26334c80;backdrop-filter:blur(6px)}.login-prompt-modal h2{margin:0 0 10px;font-size:26px}.login-prompt-modal p{margin:0 0 22px;color:#69788e;line-height:1.6}.login-prompt-modal>div{display:grid;gap:9px}.login-prompt-modal button{min-height:46px;border:0;border-radius:14px;background:#edf1f5;color:#536177;font-weight:900;cursor:pointer}.login-prompt-modal .login-prompt-primary{background:#df668b;color:#fff}.login-prompt-modal button:focus-visible{outline:3px solid #354057;outline-offset:3px}
+.login-prompt-modal {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(390px, calc(100% - 28px));
+  max-height: calc(100dvh - 28px);
+  padding: 28px;
+  border: 3px solid #fff;
+  border-radius: 26px;
+  background: #fff;
+  color: #354057;
+  box-shadow: 0 24px 80px #17223873;
+  text-align: center;
+}
+.login-prompt-modal::backdrop {
+  background: #26334c80;
+  backdrop-filter: blur(6px);
+}
+.login-prompt-modal h2 {
+  margin: 0 0 10px;
+  font-size: 26px;
+}
+.login-prompt-modal p {
+  margin: 0 0 22px;
+  color: #69788e;
+  line-height: 1.6;
+}
+.login-prompt-modal > div {
+  display: grid;
+  gap: 9px;
+}
+.login-prompt-modal button {
+  min-height: 46px;
+  border: 0;
+  border-radius: 14px;
+  background: #edf1f5;
+  color: #536177;
+  font-weight: 900;
+  cursor: pointer;
+}
+.login-prompt-modal .login-prompt-primary {
+  background: #df668b;
+  color: #fff;
+}
+.login-prompt-modal button:focus-visible {
+  outline: 3px solid #354057;
+  outline-offset: 3px;
+}

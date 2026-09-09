@@ -14,6 +14,11 @@ export const LABELS: Record<RewardKind, string> = {
   memory2: "같은 그림 찾기 · 2단계 완료",
   memory3: "같은 그림 찾기 · 3단계 완료",
   pokeball: "몬스터볼 게임 · 완료 시 50% 확률",
+  ghostChip: "귀신 퇴치 비밀번호 · 완료 시 50% 확률",
+  magicDessert: "마법 디저트 파티 · 완료 시 50% 확률",
+  dessertTime: "티니핑 디저트 타임 · 완료 시 50% 확률",
+  secretMap: "마법의 비밀 지도 · 완료 시 20% 확률",
+  pokemonBag: "포켓몬 박사님의 가방 정리 · 완료 시 20% 확률",
 };
 const KEY = "hams-character-quiz:stickers:v1";
 type Entry = {
@@ -113,7 +118,12 @@ export async function purchaseProduct(
 ) {
   return locked(() => {
     const data = readStore();
-    if (!Number.isSafeInteger(unitPrice) || unitPrice <= 0 || !Number.isSafeInteger(quantity) || quantity <= 0)
+    if (
+      !Number.isSafeInteger(unitPrice) ||
+      unitPrice <= 0 ||
+      !Number.isSafeInteger(quantity) ||
+      quantity <= 0
+    )
       throw Error("상품 가격이나 수량이 올바르지 않습니다.");
     const cost = unitPrice * quantity;
     if (balance(data) < cost) throw Error("스티커가 부족해요.");

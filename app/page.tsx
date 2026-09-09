@@ -31,7 +31,9 @@ export default function Home() {
     () => "web",
   );
   const [selectedLayout, setSelectedLayout] = useState<LayoutMode | null>(null);
-  const [orientationNotice, setOrientationNotice] = useState<string | null>(null);
+  const [orientationNotice, setOrientationNotice] = useState<string | null>(
+    null,
+  );
   const [selectedWorld, setSelectedWorld] = useState<QuizWorld | null>(null);
   const [gamesOpen, setGamesOpen] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -94,13 +96,12 @@ export default function Home() {
     <main className="home-shell">
       <div className="sky-decoration cloud-one" />
       <div className="sky-decoration cloud-two" />
-      <SiteHeader />
+      <SiteHeader catalogLoginNotice />
       <section className="hero">
-        <span className="hero-badge">한글 · 그리기 놀이</span>
+        <span className="hero-badge">한글 · 수학 ·그리기 놀이</span>
         <h1>
           어떤 친구와
-          <br />
-          <em>오늘 놀아볼까?</em>
+          <em> 오늘 놀아볼까?</em>
         </h1>
         <p>좋아하는 친구를 골라 퀴즈를 풀거나 그림을 그려봐요!</p>
         <div

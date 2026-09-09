@@ -39,7 +39,13 @@ function stickerSnapshot() {
   }
 }
 
-export function SiteAuth() {
+export function SiteAuth({
+  hideAnonymousControls = false,
+  onAuthenticatedChange,
+}: {
+  hideAnonymousControls?: boolean;
+  onAuthenticatedChange?: (authenticated: boolean) => void;
+} = {}) {
   const pathname = usePathname();
   const [retry, setRetry] = useState(0);
   const [auth, setAuth] = useState<AuthState>({
@@ -60,6 +66,10 @@ export function SiteAuth() {
   const accountKey = auth.user ? `${pathname}:${auth.user.id}` : null;
   const isOpen =
     accountKey !== null && openFor === accountKey && auth.status === "ready";
+
+  useEffect(() => {
+    if (auth.status === "ready") onAuthenticatedChange?.(auth.user !== null);
+  }, [auth.status, auth.user, onAuthenticatedChange]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -135,173 +145,186 @@ export function SiteAuth() {
   }
 
   return (
-    <div
-      ref={containerRef}
-      className="site-auth"
-      aria-label="HAMS 계정"
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null))
-          setOpenFor(null);
-      }}
-    >
-      {auth.status === "loading" ? (
-        <button
-          className="auth-button"
-          type="button"
-          disabled
-          aria-label="로그인 상태 확인 중"
+    <>
+      {auth.user ? (
+        <Link
+          className="shop-header-button"
+          href="/shop"
+          aria-label="스티커 상점"
         >
-          확인 중…
-        </button>
-      ) : auth.status === "error" ? (
-        <button
-          className="auth-button"
-          type="button"
-          onClick={() => setRetry((value) => value + 1)}
-          title="로그인 상태를 확인하지 못했어요. 눌러서 다시 확인해 주세요."
-        >
-          로그인 재확인
-        </button>
-      ) : auth.user ? (
-        <>
+          🛍️ <span>상점</span>
+        </Link>
+      ) : null}
+      <div
+        ref={containerRef}
+        className="site-auth"
+        aria-label="HAMS 계정"
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null))
+            setOpenFor(null);
+        }}
+      >
+        {hideAnonymousControls && !auth.user ? null : auth.status ===
+          "loading" ? (
           <button
-            ref={toggleRef}
-            className="account-toggle"
+            className="auth-button"
             type="button"
-            aria-label={isOpen ? "회원 정보 닫기" : "회원 정보 열기"}
-            aria-expanded={isOpen}
-            aria-controls={isOpen ? panelId : undefined}
-            onClick={() => setOpenFor(isOpen ? null : accountKey)}
+            disabled
+            aria-label="로그인 상태 확인 중"
           >
-            <span className="account-avatar" aria-hidden="true">
-              {Array.from(auth.user.nickname.trim())[0]?.toUpperCase() || "나"}
-            </span>
-            <span className="account-caret" aria-hidden="true">
-              {isOpen ? "▲" : "▼"}
-            </span>
+            확인 중…
           </button>
-          {isOpen && (
-            <section
-              id={panelId}
-              className="account-popover"
-              aria-labelledby={`${panelId}-name`}
+        ) : auth.status === "error" ? (
+          <button
+            className="auth-button"
+            type="button"
+            onClick={() => setRetry((value) => value + 1)}
+            title="로그인 상태를 확인하지 못했어요. 눌러서 다시 확인해 주세요."
+          >
+            로그인 재확인
+          </button>
+        ) : auth.user ? (
+          <>
+            <button
+              ref={toggleRef}
+              className="account-toggle"
+              type="button"
+              aria-label={isOpen ? "회원 정보 닫기" : "회원 정보 열기"}
+              aria-expanded={isOpen}
+              aria-controls={isOpen ? panelId : undefined}
+              onClick={() => setOpenFor(isOpen ? null : accountKey)}
             >
-              <div className="account-identity">
-                <div className="account-person">
-                  <strong id={`${panelId}-name`}>{auth.user.nickname}</strong>
-                  <span>{auth.user.email || "이메일 미등록"}</span>
-                </div>
-                <div
-                  className="account-mode"
-                  role="group"
-                  aria-label="회원 메뉴 모드"
-                >
-                  <button
-                    type="button"
-                    aria-pressed={!isParent}
-                    onClick={() => setParentFor(null)}
+              <span className="account-avatar" aria-hidden="true">
+                {Array.from(auth.user.nickname.trim())[0]?.toUpperCase() ||
+                  "나"}
+              </span>
+              <span className="account-caret" aria-hidden="true">
+                {isOpen ? "▲" : "▼"}
+              </span>
+            </button>
+            {isOpen && (
+              <section
+                id={panelId}
+                className="account-popover"
+                aria-labelledby={`${panelId}-name`}
+              >
+                <div className="account-identity">
+                  <div className="account-person">
+                    <strong id={`${panelId}-name`}>{auth.user.nickname}</strong>
+                    <span>{auth.user.email || "이메일 미등록"}</span>
+                  </div>
+                  <div
+                    className="account-mode"
+                    role="group"
+                    aria-label="회원 메뉴 모드"
                   >
-                    자녀
-                  </button>
-                  <button
-                    type="button"
-                    aria-pressed={isParent}
-                    onClick={() => setParentFor(auth.user!.id)}
-                  >
-                    부모
-                  </button>
-                </div>
-              </div>
-              {isParent ? (
-                <>
-                  <dl className="account-details">
-                    <div>
-                      <dt>생년월일</dt>
-                      <dd>{auth.user.birthDate || "미등록"}</dd>
-                    </div>
-                    <div>
-                      <dt>성별</dt>
-                      <dd>
-                        {auth.user.gender
-                          ? (genderLabels[auth.user.gender] ?? "미등록")
-                          : "미등록"}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>서비스사이트</dt>
-                      <dd>
-                        {auth.user.membership?.serviceName || "가입정보 없음"}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>요금제</dt>
-                      <dd>{auth.user.membership?.plan || "-"}</dd>
-                    </div>
-                    <div>
-                      <dt>AI 사용</dt>
-                      <dd>
-                        <span
-                          className={`account-ai${auth.user.aiEnabled ? " enabled" : ""}`}
-                        >
-                          {auth.user.aiEnabled ? "AI ON" : "AI OFF"}
-                        </span>
-                      </dd>
-                    </div>
-                  </dl>
-                  <div className="account-actions">
-                    <Link
-                      href="/stickers"
-                      onClick={() => setOpenFor(null)}
-                      style={{
-                        display: "grid",
-                        placeItems: "center",
-                        fontSize: 14,
-                        fontWeight: 800,
-                        color: "#4f6380",
-                      }}
-                    >
-                      스티커관리
-                    </Link>
-                    {/* <button type="button" onClick={() => navigate("auth/profile", true)}>사이트변경</button> */}
                     <button
                       type="button"
-                      onClick={() => navigate("auth/logout")}
+                      aria-pressed={!isParent}
+                      onClick={() => setParentFor(null)}
                     >
-                      로그아웃
+                      자녀
+                    </button>
+                    <button
+                      type="button"
+                      aria-pressed={isParent}
+                      onClick={() => setParentFor(auth.user!.id)}
+                    >
+                      부모
                     </button>
                   </div>
-                </>
-              ) : (
-                <div className="account-details account-child-details">
-                  <div className="account-stickers" role="status">
-                    <span>⭐ 모은 스티커</span>
-                    <strong>
-                      {stickerCount === null
-                        ? "확인할 수 없어요"
-                        : `${stickerCount}개`}
-                    </strong>
-                  </div>
-                  <Link
-                    className="account-catalog"
-                    href="/catalog"
-                    onClick={() => setOpenFor(null)}
-                  >
-                    📖 캐릭터 도감 보기
-                  </Link>
                 </div>
-              )}
-            </section>
-          )}
-        </>
-      ) : (
-        <button
-          className="auth-button"
-          type="button"
-          onClick={() => navigate("sso/login")}
-        >
-          로그인
-        </button>
-      )}
-    </div>
+                {isParent ? (
+                  <>
+                    <dl className="account-details">
+                      <div>
+                        <dt>생년월일</dt>
+                        <dd>{auth.user.birthDate || "미등록"}</dd>
+                      </div>
+                      <div>
+                        <dt>성별</dt>
+                        <dd>
+                          {auth.user.gender
+                            ? (genderLabels[auth.user.gender] ?? "미등록")
+                            : "미등록"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>서비스사이트</dt>
+                        <dd>
+                          {auth.user.membership?.serviceName || "가입정보 없음"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>요금제</dt>
+                        <dd>{auth.user.membership?.plan || "-"}</dd>
+                      </div>
+                      <div>
+                        <dt>AI 사용</dt>
+                        <dd>
+                          <span
+                            className={`account-ai${auth.user.aiEnabled ? " enabled" : ""}`}
+                          >
+                            {auth.user.aiEnabled ? "AI ON" : "AI OFF"}
+                          </span>
+                        </dd>
+                      </div>
+                    </dl>
+                    <div className="account-actions">
+                      <Link
+                        href="/stickers"
+                        onClick={() => setOpenFor(null)}
+                        style={{
+                          display: "grid",
+                          placeItems: "center",
+                          fontSize: 14,
+                          fontWeight: 800,
+                          color: "#4f6380",
+                        }}
+                      >
+                        스티커관리
+                      </Link>
+                      {/* <button type="button" onClick={() => navigate("auth/profile", true)}>사이트변경</button> */}
+                      <button
+                        type="button"
+                        onClick={() => navigate("auth/logout")}
+                      >
+                        로그아웃
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="account-details account-child-details">
+                    <div className="account-stickers" role="status">
+                      <span>⭐ 모은 스티커</span>
+                      <strong>
+                        {stickerCount === null
+                          ? "확인할 수 없어요"
+                          : `${stickerCount}개`}
+                      </strong>
+                    </div>
+                    <Link
+                      className="account-catalog"
+                      href="/catalog"
+                      onClick={() => setOpenFor(null)}
+                    >
+                      📖 캐릭터 도감 보기
+                    </Link>
+                  </div>
+                )}
+              </section>
+            )}
+          </>
+        ) : (
+          <button
+            className="auth-button"
+            type="button"
+            onClick={() => navigate("sso/login")}
+          >
+            로그인
+          </button>
+        )}
+      </div>
+    </>
   );
 }

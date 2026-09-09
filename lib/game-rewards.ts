@@ -19,7 +19,7 @@
  */
 export const gameRewardConfig = {
   /** 저장된 예전 기본 보상값을 새 설정으로 갱신할 때 사용하는 버전입니다. */
-  version: 2,
+  version: 8,
 
   stickerRewards: {
     /** 이름찾기: 10문제를 모두 풀고 9문제 이상 맞히면 3개를 항상 지급합니다. */
@@ -39,6 +39,21 @@ export const gameRewardConfig = {
 
     /** 몬스터볼 게임: 계산까지 완료하면 포획 성공 여부와 별개로 50% 확률로 1개를 지급합니다. */
     pokeball: { amount: 1, requiredTotal: 1, minimumCorrect: 1, requirePerfect: true, chance: 0.5 },
+
+    /** 귀신 퇴치 비밀번호: 두 문제를 모두 풀면 고스트 칩 1개를 50% 확률로 지급합니다. */
+    ghostChip: { amount: 1, requiredTotal: 2, minimumCorrect: 2, requirePerfect: true, chance: 0.5 },
+
+    /** 마법 디저트 파티: 두 문제를 모두 풀면 파티 스티커 1개를 50% 확률로 지급합니다. */
+    magicDessert: { amount: 1, requiredTotal: 2, minimumCorrect: 2, requirePerfect: true, chance: 0.5 },
+
+    /** 디저트 타임: 시계를 맞히면 시간 스티커 1개를 50% 확률로 지급합니다. */
+    dessertTime: { amount: 1, requiredTotal: 1, minimumCorrect: 1, requirePerfect: true, chance: 0.5 },
+
+    /** 마법의 비밀 지도: 여덟 조각을 완성하면 지도 스티커 1개를 20% 확률로 지급합니다. */
+    secretMap: { amount: 1, requiredTotal: 8, minimumCorrect: 8, requirePerfect: true, chance: 0.2 },
+
+    /** 포켓몬 가방 정리: 분류와 개수 세기를 완료하면 스티커 1개를 20% 확률로 지급합니다. */
+    pokemonBag: { amount: 1, requiredTotal: 1, minimumCorrect: 1, requirePerfect: true, chance: 0.2 },
   },
 
   pokemonCapture: {
@@ -48,5 +63,34 @@ export const gameRewardConfig = {
      * 현재 몬스터볼이 1~5개이므로 최종 확률은 5~25%입니다.
      */
     chance: 0.05,
+  },
+
+  mysteryAptCapture: {
+    /** 첫 번째 계산 문제에서 얻은 두 자리 정답에 곱해 도감 획득 확률로 사용합니다. */
+    chancePerPasswordNumber: 0.01,
+  },
+
+  magicDessertCapture: {
+    /** 첫 번째 10 만들기에서 찾은 수 하나당 도감 획득 확률 5%를 적용합니다. */
+    chancePerDessert: 0.05,
+  },
+
+  dessertTimeCapture: {
+    /** 시계 문제 완료 후 캐릭터 도감 획득 확률입니다. */
+    chance: 0.2,
+  },
+
+  secretMapCapture: {
+    /** 비밀 지도 완성 후 신비아파트 도감 획득 확률입니다. */
+    chance: 0.01,
+    /** 비밀 지도 완성 후 지도 스티커 획득 확률입니다. */
+    stickerChance: 0.2,
+  },
+
+  pokemonBagCapture: {
+    /** 가방 정리 완료 후 포켓몬 도감 획득 확률입니다. */
+    chance: 0.01,
+    /** 가방 정리 완료 후 스티커 획득 확률입니다. */
+    stickerChance: 0.2,
   },
 } as const;

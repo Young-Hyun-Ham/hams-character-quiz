@@ -1,7 +1,10 @@
 "use client";
 import { StickerReward } from "../../components/sticker-reward";
 import { collectCard } from "../../catalog/storage";
-import { isAuthenticated, LoginPromptModal } from "../../components/login-prompt-modal";
+import {
+  isAuthenticated,
+  LoginPromptModal,
+} from "../../components/login-prompt-modal";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
@@ -260,7 +263,11 @@ export default function QuizGame({
   const grade = async (correct: boolean) => {
     if (correct) {
       if (await isAuthenticated()) {
-        try { collectCard(world.slug, current.image); } catch { /* Keep playing if storage is unavailable. */ }
+        try {
+          collectCard(world.slug, current.image);
+        } catch {
+          /* Keep playing if storage is unavailable. */
+        }
       } else setLoginPromptOpen(true);
     }
     const nextAnswers = [...answers, { character: current, correct }];
@@ -502,7 +509,10 @@ export default function QuizGame({
             <Link href="/">처음으로 돌아가기</Link>
           </div>
         </section>
-        <LoginPromptModal open={loginPromptOpen} onClose={() => setLoginPromptOpen(false)} />
+        <LoginPromptModal
+          open={loginPromptOpen}
+          onClose={() => setLoginPromptOpen(false)}
+        />
       </main>
     );
   }
@@ -686,7 +696,10 @@ export default function QuizGame({
           </div>
         )}
       </section>
-      <LoginPromptModal open={loginPromptOpen} onClose={() => setLoginPromptOpen(false)} />
+      <LoginPromptModal
+        open={loginPromptOpen}
+        onClose={() => setLoginPromptOpen(false)}
+      />
     </main>
   );
 }

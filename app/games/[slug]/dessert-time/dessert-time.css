@@ -1,0 +1,240 @@
+.time-game {
+  min-height: 100dvh;
+  padding: 18px clamp(12px, 4vw, 48px) 40px;
+  color: #55354f;
+  background: radial-gradient(
+    circle at 50% 12%,
+    #fffdf5,
+    #fce1f1 52%,
+    var(--soft)
+  );
+}
+.time-header {
+  max-width: 980px;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.time-header a,
+.time-header button {
+  padding: 10px 14px;
+  border: 2px solid #fff;
+  border-radius: 14px;
+  background: #ffffffdc;
+  color: #633d5b;
+  font-weight: 850;
+  cursor: pointer;
+}
+.time-panel {
+  max-width: 880px;
+  min-height: 740px;
+  margin: 18px auto 0;
+  padding: 25px;
+  overflow: hidden;
+  text-align: center;
+  border: 4px solid #fff;
+  border-radius: 34px;
+  background: linear-gradient(#fffdf5ed, #fff1faed);
+  box-shadow: 0 22px 65px #a73b7850;
+}
+.time-kicker {
+  color: var(--theme);
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: 0.1em;
+}
+.time-panel h1 {
+  margin: 12px 0;
+  font-size: clamp(27px, 5vw, 43px);
+}
+.time-guide {
+  max-width: 650px;
+  margin: 15px auto 5px;
+  padding: 8px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  border: 3px solid #ffc2e1;
+  border-radius: 26px;
+  background: #fff;
+}
+.time-guide img {
+  width: 88px;
+  height: 88px;
+  object-fit: contain;
+}
+.time-guide p {
+  margin: 0;
+  line-height: 1.5;
+  font-weight: 750;
+}
+.time-guide b {
+  color: var(--theme);
+}
+.time-guide strong {
+  color: #cf2b7e;
+}
+.analog-clock {
+  width: min(360px, 85vw);
+  display: block;
+  margin: 3px auto;
+  touch-action: none;
+  user-select: none;
+  filter: drop-shadow(0 13px 16px #7c416544);
+}
+.clock-face {
+  fill: #fffdf5;
+  stroke: var(--theme);
+  stroke-width: 12;
+}
+.analog-clock text {
+  fill: #594259;
+  font-size: 22px;
+  font-weight: 950;
+  dominant-baseline: middle;
+  pointer-events: none;
+}
+.clock-hand {
+  stroke-linecap: round;
+  pointer-events: none;
+  transition: stroke 0.15s;
+}
+.hand-hit {
+  stroke: transparent;
+  stroke-width: 30;
+  stroke-linecap: round;
+  cursor: grab;
+  touch-action: none;
+}
+.hand-hit:active {
+  cursor: grabbing;
+}
+.hour-hand {
+  stroke: #75436b;
+  stroke-width: 18;
+}
+.minute-hand {
+  stroke: #ed4c9b;
+  stroke-width: 12;
+}
+.clock-hand.active {
+  stroke: #ffb000;
+}
+.clock-pin {
+  fill: #ffd044;
+  stroke: #874b70;
+  stroke-width: 5;
+  pointer-events: none;
+}
+.digital-time {
+  width: max-content;
+  margin: 5px auto 12px;
+  padding: 8px 18px;
+  border-radius: 15px;
+  background: #fff;
+  font-weight: 800;
+}
+.digital-time b {
+  margin-left: 8px;
+  color: #d82b83;
+  font-size: 25px;
+}
+.time-check,
+.time-actions button,
+.time-actions a {
+  padding: 14px 20px;
+  border: 2px solid #fff;
+  border-radius: 17px;
+  color: #fff;
+  background: var(--theme);
+  box-shadow: 0 6px 0 #8d3b70;
+  font-weight: 900;
+  cursor: pointer;
+}
+.time-chance {
+  color: #84556f;
+  font-weight: 800;
+}
+.time-message {
+  min-height: 25px;
+  color: #a42d71;
+  font-weight: 900;
+}
+.time-result {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+.time-result > img {
+  z-index: 1;
+  width: 250px;
+  height: 250px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 20px #ff70bd);
+}
+.time-result h1,
+.time-result h2,
+.time-result p {
+  z-index: 1;
+  margin: 6px;
+}
+.time-result.miss > img {
+  filter: grayscale(0.3);
+}
+.time-sparkles {
+  position: absolute;
+  top: 120px;
+  color: #ff429d;
+  font-size: clamp(36px, 8vw, 72px);
+  letter-spacing: 0.14em;
+  animation: time-sparkle 1s ease-in-out infinite alternate;
+}
+.time-actions {
+  z-index: 1;
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.time-check {
+  position: relative;
+  top: -10px;
+  margin-bottom: 12px;
+}
+.digital-time {
+  margin-bottom: 28px;
+}
+.time-chance {
+  margin-top: 0;
+}
+.time-actions {
+  transform: translateY(-10px);
+  margin-bottom: 14px;
+}
+@keyframes time-sparkle {
+  to {
+    transform: translateY(-25px) scale(1.1);
+    color: #ffc627;
+  }
+}
+@media (max-width: 560px) {
+  .time-header strong {
+    display: none;
+  }
+  .time-panel {
+    min-height: calc(100dvh - 100px);
+    padding: 18px 9px;
+  }
+  .time-guide img {
+    width: 70px;
+    height: 70px;
+  }
+  .analog-clock {
+    width: min(315px, 88vw);
+  }
+}

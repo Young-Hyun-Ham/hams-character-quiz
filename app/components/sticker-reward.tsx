@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { award, eligible, LABELS, type RewardKind } from "../stickers/storage";
+import { isAuthenticated } from "./login-prompt-modal";
 
 export function StickerReward({
   kind,
@@ -20,9 +21,19 @@ export function StickerReward({
     if (!qualifies) return;
     id.current ??= crypto.randomUUID();
     let active = true;
-    award(id.current, kind)
+    isAuthenticated()
+      .then((authenticated) => {
+        if (!authenticated) {
+          if (active) {
+            setFailed(false);
+            setMessage("로그인하면 스티커를 획득하고 저장할 수 있어요.");
+          }
+          return null;
+        }
+        return award(id.current!, kind);
+      })
       .then((result) => {
-        if (active) {
+        if (active && result) {
           setFailed(false);
           setMessage(
             result.amount > 0
@@ -35,7 +46,7 @@ export function StickerReward({
         if (active) {
           setFailed(true);
           setMessage(
-            "스티커를 저장하지 못했어요. 브라우저 저장 공간을 확인해 주세요.",
+            "로그인 상태나 브라우저 저장 공간을 확인한 뒤 다시 시도해 주세요.",
           );
         }
       });

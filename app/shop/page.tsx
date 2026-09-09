@@ -50,7 +50,9 @@ export default function ShopPage() {
   async function addProduct(product: (typeof SHOP_PRODUCTS)[number]) {
     try {
       await purchaseProduct(product.id, product.name, product.price, quantity);
-      setMessage(`${product.name} ${quantity}개를 담았어요! 부모님께 보여 주세요.`);
+      setMessage(
+        `${product.name} ${quantity}개를 담았어요! 부모님께 보여 주세요.`,
+      );
       setSelected(null);
       setQuantity(1);
     } catch (error) {
@@ -117,36 +119,99 @@ export default function ShopPage() {
             {SHOP_PRODUCTS.map((product, index) => {
               const maximum = Math.floor(data.balance / product.price);
               return (
-              <article className="product-card" key={product.id}>
-                <button
-                  type="button"
-                  className="product-select"
-                  onClick={() => { setSelected(product.id); setQuantity(1); }}
-                  aria-label={`${product.name}, 스티커 ${product.price}개`}
-                >
-                  <span
-                    className="product-image"
-                    role="img"
-                    aria-label={product.name}
-                    style={
-                      {
-                        "--column": index % 4,
-                        "--row": Math.floor(index / 4),
-                      } as CSSProperties
-                    }
-                  />
-                  <strong>{product.name}</strong>
-                  <span className="product-price">⭐ {product.price}개</span>
-                </button>
-                {selected === product.id && (
-                  <div className="product-overlay">
-                    <div className="product-overlay-shade" />
-                    <div className="product-quantity"><label htmlFor={`quantity-${product.id}`}>수량</label><input id={`quantity-${product.id}`} type="number" min="0" max={Math.max(0, maximum)} value={quantity} onKeyDown={(event) => { if (quantity === 0 && /^\d$/.test(event.key)) { event.preventDefault(); setQuantity(Math.min(maximum, Number(event.key))); } }} onChange={(event) => { const input = event.target.value; const next = input === "" ? 0 : Math.max(0, Math.min(maximum, Number.parseInt(input, 10) || 0)); event.currentTarget.value = String(next); setQuantity(next); }} /><button type="button" disabled={maximum < 1} onClick={() => setQuantity(maximum)}>전부</button></div>
-                    <strong className="product-total">{product.id === "cash" ? `${quantity * 10}원` : `⭐ ${product.price * quantity}개`}</strong>
-                    <div className="product-overlay-actions"><button type="button" disabled={quantity < 1 || maximum < 1 || quantity > maximum} onClick={() => void addProduct(product)}>상품담기</button><button type="button" onClick={() => { setSelected(null); setQuantity(1); }}>닫기</button></div>
-                  </div>
-                )}
-              </article>
+                <article className="product-card" key={product.id}>
+                  <button
+                    type="button"
+                    className="product-select"
+                    onClick={() => {
+                      setSelected(product.id);
+                      setQuantity(1);
+                    }}
+                    aria-label={`${product.name}, 스티커 ${product.price}개`}
+                  >
+                    <span
+                      className="product-image"
+                      role="img"
+                      aria-label={product.name}
+                      style={
+                        {
+                          "--column": index % 4,
+                          "--row": Math.floor(index / 4),
+                        } as CSSProperties
+                      }
+                    />
+                    <strong>{product.name}</strong>
+                    <span className="product-price">⭐ {product.price}개</span>
+                  </button>
+                  {selected === product.id && (
+                    <div className="product-overlay">
+                      <div className="product-overlay-shade" />
+                      <div className="product-quantity">
+                        <label htmlFor={`quantity-${product.id}`}>수량</label>
+                        <input
+                          id={`quantity-${product.id}`}
+                          type="number"
+                          min="0"
+                          max={Math.max(0, maximum)}
+                          value={quantity}
+                          onKeyDown={(event) => {
+                            if (quantity === 0 && /^\d$/.test(event.key)) {
+                              event.preventDefault();
+                              setQuantity(Math.min(maximum, Number(event.key)));
+                            }
+                          }}
+                          onChange={(event) => {
+                            const input = event.target.value;
+                            const next =
+                              input === ""
+                                ? 0
+                                : Math.max(
+                                    0,
+                                    Math.min(
+                                      maximum,
+                                      Number.parseInt(input, 10) || 0,
+                                    ),
+                                  );
+                            event.currentTarget.value = String(next);
+                            setQuantity(next);
+                          }}
+                        />
+                        <button
+                          type="button"
+                          disabled={maximum < 1}
+                          onClick={() => setQuantity(maximum)}
+                        >
+                          전부
+                        </button>
+                      </div>
+                      <strong className="product-total">
+                        {product.id === "cash"
+                          ? `${quantity * 10}원`
+                          : `⭐ ${product.price * quantity}개`}
+                      </strong>
+                      <div className="product-overlay-actions">
+                        <button
+                          type="button"
+                          disabled={
+                            quantity < 1 || maximum < 1 || quantity > maximum
+                          }
+                          onClick={() => void addProduct(product)}
+                        >
+                          상품담기
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelected(null);
+                            setQuantity(1);
+                          }}
+                        >
+                          닫기
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </article>
               );
             })}
           </div>
@@ -193,7 +258,10 @@ function PurchaseList({
           pending.map((item) => (
             <article className="purchase-row" key={item.id}>
               <div>
-                <strong>{item.name} × {item.quantity ?? 1}{item.productId === "cash" ? ` (${item.cost * 10}원)` : ""}</strong>
+                <strong>
+                  {item.name} × {item.quantity ?? 1}
+                  {item.productId === "cash" ? ` (${item.cost * 10}원)` : ""}
+                </strong>
                 <span>
                   ⭐ {item.cost}개 ·{" "}
                   {new Date(item.purchasedAt).toLocaleString("ko-KR")}
@@ -223,7 +291,10 @@ function PurchaseList({
           {completed.map((item) => (
             <article className="purchase-row" key={item.id}>
               <div>
-                <strong>{item.name} × {item.quantity ?? 1}{item.productId === "cash" ? ` (${item.cost * 10}원)` : ""}</strong>
+                <strong>
+                  {item.name} × {item.quantity ?? 1}
+                  {item.productId === "cash" ? ` (${item.cost * 10}원)` : ""}
+                </strong>
                 <span>⭐ {item.cost}개</span>
               </div>
               <em>전달 완료</em>
