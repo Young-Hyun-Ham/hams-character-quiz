@@ -350,6 +350,9 @@
 }
 .drawing-frame {
   position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 .drawing-paper {
   aspect-ratio: 4/3;
@@ -364,6 +367,7 @@
   background: #fff;
   isolation: isolate;
   overscroll-behavior: contain;
+  touch-action: none;
 }
 .drawing-paper.zoomed {
   display: block;
@@ -395,6 +399,8 @@
   mix-blend-mode: multiply;
   pointer-events: none;
   user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
 }
 .drawing-surface canvas {
   position: absolute;
