@@ -1,11 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useSyncExternalStore, type CSSProperties } from "react";
+import {
+  useEffect,
+  useState,
+  useSyncExternalStore,
+  type CSSProperties,
+} from "react";
+import { ParentPinDialog } from "../components/parent-pin-dialog";
 import {
   balance,
   cancelPurchase,
   completePurchase,
+  lockAdmin,
   purchaseProduct,
   purchases,
   refreshStore,
@@ -15,6 +22,8 @@ import "./shop.css";
 import "./shop-sprite.css";
 import "./shop-actions.css";
 import "./shop-quantity.css";
+
+const STICKER_RECLAIM_PRODUCT_ID = "sticker-reclaim";
 
 function subscribe(callback: () => void) {
   window.addEventListener("storage", callback);
@@ -47,15 +56,20 @@ export default function ShopPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [message, setMessage] = useState("");
+  const [parentGateOpen, setParentGateOpen] = useState(false);
   useEffect(() => {
-    void refreshStore().catch(() => setMessage("스티커 정보를 불러오지 못했어요."));
+    void refreshStore().catch(() =>
+      setMessage("스티커 정보를 불러오지 못했어요."),
+    );
   }, []);
 
   async function addProduct(product: (typeof SHOP_PRODUCTS)[number]) {
     try {
       await purchaseProduct(product.id, product.name, product.price, quantity);
       setMessage(
-        `${product.name} ${quantity}개를 담았어요! 부모님께 보여 주세요.`,
+        product.id === STICKER_RECLAIM_PRODUCT_ID
+          ? `스티커 ${quantity}개 회수를 요청했어요. 부모님께 보여 주세요.`
+          : `${product.name} ${quantity}개를 담았어요! 부모님께 보여 주세요.`,
       );
       setSelected(null);
       setQuantity(1);
@@ -98,8 +112,9 @@ export default function ShopPage() {
               type="button"
               aria-pressed={mode === "parent"}
               onClick={() => {
-                setMode("parent");
                 setMessage("");
+                lockAdmin();
+                setParentGateOpen(true);
               }}
             >
               부모
@@ -121,7 +136,11 @@ export default function ShopPage() {
         {mode === "child" ? (
           <div className="product-grid">
             {SHOP_PRODUCTS.map((product, index) => {
-              const maximum = Math.floor(data.balance / product.price);
+              const isStickerReclaim =
+                product.id === STICKER_RECLAIM_PRODUCT_ID;
+              const maximum = isStickerReclaim
+                ? 9999
+                : Math.floor(data.balance / product.price);
               return (
                 <article className="product-card" key={product.id}>
                   <button
@@ -131,31 +150,41 @@ export default function ShopPage() {
                       setSelected(product.id);
                       setQuantity(1);
                     }}
-                    aria-label={`${product.name}, 스티커 ${product.price}개`}
+                    aria-label={
+                      isStickerReclaim
+                        ? "회수할 스티커 수량 입력"
+                        : `${product.name}, 스티커 ${product.price}개`
+                    }
                   >
                     <span
-                      className="product-image"
+                      className={`product-image${isStickerReclaim ? " product-image-reclaim" : ""}`}
                       role="img"
                       aria-label={product.name}
                       style={
                         {
-                          "--column": index % 4,
-                          "--row": Math.floor(index / 4),
+                          "--column": isStickerReclaim ? 0 : (index - 0) % 4,
+                          "--row": isStickerReclaim
+                            ? 0
+                            : Math.floor((index - 0) / 4),
                         } as CSSProperties
                       }
                     />
                     <strong>{product.name}</strong>
-                    <span className="product-price">⭐ {product.price}개</span>
+                    <span className="product-price">
+                      {isStickerReclaim ? "1~9999개" : `⭐ ${product.price}개`}
+                    </span>
                   </button>
                   {selected === product.id && (
                     <div className="product-overlay">
                       <div className="product-overlay-shade" />
                       <div className="product-quantity">
-                        <label htmlFor={`quantity-${product.id}`}>수량</label>
+                        <label htmlFor={`quantity-${product.id}`}>
+                          {isStickerReclaim ? "회수" : "수량"}
+                        </label>
                         <input
                           id={`quantity-${product.id}`}
                           type="number"
-                          min="0"
+                          min="1"
                           max={Math.max(0, maximum)}
                           value={quantity}
                           onKeyDown={(event) => {
@@ -180,18 +209,22 @@ export default function ShopPage() {
                             setQuantity(next);
                           }}
                         />
-                        <button
-                          type="button"
-                          disabled={maximum < 1}
-                          onClick={() => setQuantity(maximum)}
-                        >
-                          전부
-                        </button>
+                        {!isStickerReclaim && (
+                          <button
+                            type="button"
+                            disabled={maximum < 1}
+                            onClick={() => setQuantity(maximum)}
+                          >
+                            전부
+                          </button>
+                        )}
                       </div>
                       <strong className="product-total">
-                        {product.id === "cash"
-                          ? `${quantity * 10}원`
-                          : `⭐ ${product.price * quantity}개`}
+                        {isStickerReclaim
+                          ? `⭐ ${quantity}개 회수`
+                          : product.id === "cash"
+                            ? `${quantity * 10}원`
+                            : `⭐ ${product.price * quantity}개`}
                       </strong>
                       <div className="product-overlay-actions">
                         <button
@@ -201,7 +234,7 @@ export default function ShopPage() {
                           }
                           onClick={() => void addProduct(product)}
                         >
-                          상품담기
+                          {isStickerReclaim ? "회수 요청" : "상품담기"}
                         </button>
                         <button
                           type="button"
@@ -223,16 +256,50 @@ export default function ShopPage() {
           <PurchaseList
             items={data.purchases}
             onComplete={async (id) => {
-              await completePurchase(id);
-              setMessage("상품 전달을 완료했어요.");
+              try {
+                const item = data.purchases.find(
+                  (purchase) => purchase.id === id,
+                );
+                await completePurchase(id);
+                setMessage(
+                  item?.productId === STICKER_RECLAIM_PRODUCT_ID
+                    ? `스티커 ${item.cost}개를 회수했어요.`
+                    : "상품 전달을 완료했어요.",
+                );
+              } catch (error) {
+                setMessage(
+                  error instanceof Error ? error.message : "완료하지 못했어요.",
+                );
+              }
             }}
             onCancel={async (id) => {
-              await cancelPurchase(id);
-              setMessage("구매를 취소하고 스티커를 환불했어요.");
+              try {
+                const item = data.purchases.find(
+                  (purchase) => purchase.id === id,
+                );
+                await cancelPurchase(id);
+                setMessage(
+                  item?.productId === STICKER_RECLAIM_PRODUCT_ID
+                    ? "스티커 회수 요청을 취소했어요."
+                    : "구매를 취소하고 스티커를 환불했어요.",
+                );
+              } catch (error) {
+                setMessage(
+                  error instanceof Error ? error.message : "취소하지 못했어요.",
+                );
+              }
             }}
           />
         )}
       </section>
+      <ParentPinDialog
+        open={parentGateOpen}
+        onCancel={() => setParentGateOpen(false)}
+        onUnlocked={() => {
+          setMode("parent");
+          setParentGateOpen(false);
+        }}
+      />
     </main>
   );
 }
@@ -263,17 +330,23 @@ function PurchaseList({
             <article className="purchase-row" key={item.id}>
               <div>
                 <strong>
-                  {item.name} × {item.quantity ?? 1}
+                  {item.productId === STICKER_RECLAIM_PRODUCT_ID
+                    ? `${item.name} ${item.quantity ?? item.cost}개`
+                    : `${item.name} × ${item.quantity ?? 1}`}
                   {item.productId === "cash" ? ` (${item.cost * 10}원)` : ""}
                 </strong>
                 <span>
-                  ⭐ {item.cost}개 ·{" "}
+                  {item.productId === STICKER_RECLAIM_PRODUCT_ID
+                    ? `완료 시 ⭐ ${item.cost}개 차감 · `
+                    : `⭐ ${item.cost}개 · `}
                   {new Date(item.purchasedAt).toLocaleString("ko-KR")}
                 </span>
               </div>
               <span className="purchase-actions">
                 <button type="button" onClick={() => void onComplete(item.id)}>
-                  완료
+                  {item.productId === STICKER_RECLAIM_PRODUCT_ID
+                    ? "회수 완료"
+                    : "완료"}
                 </button>
                 <button
                   type="button"
@@ -296,12 +369,21 @@ function PurchaseList({
             <article className="purchase-row" key={item.id}>
               <div>
                 <strong>
-                  {item.name} × {item.quantity ?? 1}
+                  {item.productId === STICKER_RECLAIM_PRODUCT_ID
+                    ? `${item.name} ${item.quantity ?? item.cost}개`
+                    : `${item.name} × ${item.quantity ?? 1}`}
                   {item.productId === "cash" ? ` (${item.cost * 10}원)` : ""}
                 </strong>
-                <span>⭐ {item.cost}개</span>
+                <span>
+                  ⭐ {item.cost}개
+                  {item.productId === STICKER_RECLAIM_PRODUCT_ID ? " 차감" : ""}
+                </span>
               </div>
-              <em>전달 완료</em>
+              <em>
+                {item.productId === STICKER_RECLAIM_PRODUCT_ID
+                  ? "회수 완료"
+                  : "전달 완료"}
+              </em>
             </article>
           ))}
         </section>

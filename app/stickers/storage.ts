@@ -23,7 +23,7 @@ export const LABELS: Record<RewardKind, string> = {
 const KEY = "hams-character-quiz:stickers:v1";
 type Entry = {
   id: string;
-  kind: RewardKind | "shop";
+  kind: RewardKind | "shop" | "drawing";
   amount: number;
   at: string;
 };
@@ -59,19 +59,41 @@ function applyState(data: Data) {
   window.dispatchEvent(new Event("stickers-changed"));
 }
 async function request(action: Record<string, unknown>) {
-  const response = await fetch("/api/stickers", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify(action) });
+  const response = await fetch("/api/stickers", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(action),
+  });
   const payload = await response.json();
-  if (!response.ok) throw Error(payload.error === "login_required" ? "로그인이 필요합니다." : payload.error === "not_enough_stickers" ? "스티커가 부족해요." : "스티커 정보를 저장하지 못했어요.");
+  if (!response.ok)
+    throw Error(
+      payload.error === "login_required"
+        ? "로그인이 필요합니다."
+        : payload.error === "not_enough_stickers"
+          ? "스티커가 부족해요."
+          : "스티커 정보를 저장하지 못했어요.",
+    );
   if (payload.state) applyState(payload.state as Data);
   return payload;
 }
 export async function refreshStore() {
-  const response = await fetch("/api/stickers", { cache: "no-store", credentials: "same-origin" });
+  const response = await fetch("/api/stickers", {
+    cache: "no-store",
+    credentials: "same-origin",
+  });
   if (!response.ok) {
-    if (response.status === 401) applyState({ configVersion: gameRewardConfig.version, rules: { ...RULES }, entries: [], purchases: [], admin: null });
+    if (response.status === 401)
+      applyState({
+        configVersion: gameRewardConfig.version,
+        rules: { ...RULES },
+        entries: [],
+        purchases: [],
+        admin: null,
+      });
     else throw Error("스티커 정보를 불러오지 못했어요.");
   } else {
-    const payload = await response.json() as { state: Data };
+    const payload = (await response.json()) as { state: Data };
     applyState(payload.state);
   }
   return cachedData;
@@ -95,7 +117,10 @@ async function locked<T>(action: () => Promise<T> | T): Promise<T> {
 export async function award(id: string, kind: RewardKind) {
   return locked(async () => {
     const payload = await request({ action: "award", id, kind });
-    return { amount: payload.amount as number, balance: payload.balance as number };
+    return {
+      amount: payload.amount as number,
+      balance: payload.balance as number,
+    };
   });
 }
 export function purchases(data = readStore()) {
@@ -115,7 +140,8 @@ export async function purchaseProduct(
       quantity <= 0
     )
       throw Error("상품 가격이나 수량이 올바르지 않습니다.");
-    void name; void unitPrice;
+    void name;
+    void unitPrice;
     const payload = await request({ action: "purchase", productId, quantity });
     window.dispatchEvent(new Event("shop-changed"));
     return { balance: payload.balance as number, id: payload.id as string };
@@ -186,6 +212,27 @@ export async function unlock(pin: string, confirmation?: string) {
 }
 export function lockAdmin() {
   authorizedHash = null;
+}
+export function isAdminAuthorized() {
+  const admin = readStore().admin;
+  return !!admin && admin.failures < 5 && authorizedHash === admin.hash;
+}
+export function getAdminAuthorization() {
+  return isAdminAuthorized() ? authorizedHash : null;
+}
+export async function changeAdminPin(pin: string, confirmation: string) {
+  if (!/^\d{6}$/.test(pin)) throw Error("숫자 6자리를 입력해 주세요.");
+  if (confirmation !== pin)
+    throw Error("두 암호가 일치하지 않아요. 다시 입력해 주세요.");
+  return locked(async () => {
+    const data = readStore();
+    if (!isAdminAuthorized())
+      throw Error("현재 관리자 암호를 다시 확인해 주세요.");
+    const salt = crypto.randomUUID();
+    data.admin = { salt, hash: await digest(pin, salt), failures: 0 };
+    await request({ action: "replace", state: data });
+    authorizedHash = data.admin.hash;
+  });
 }
 export async function saveRules(rules: typeof RULES) {
   return locked(async () => {

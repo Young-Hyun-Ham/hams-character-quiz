@@ -19,6 +19,7 @@ export async function GET(request: Request) {
           birthDate: user.birthDate ?? null,
           gender: user.gender ?? null,
           aiEnabled: user.aiEnabled === true,
+          hampoBalance: user.hampoBalance,
           membership: membership
             ? { serviceName: membership.serviceName, plan: membership.plan }
             : null,

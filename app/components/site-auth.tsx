@@ -10,7 +10,9 @@ import {
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import type { HeaderUser } from "../types/auth";
-import { balance, refreshStore } from "../stickers/storage";
+import { balance, lockAdmin, refreshStore } from "../stickers/storage";
+import { ParentPinDialog } from "./parent-pin-dialog";
+import { HampoChargeDialog } from "./hampo-charge-dialog";
 import "./site-auth.css";
 
 type AuthState = {
@@ -54,6 +56,8 @@ export function SiteAuth({
   });
   const [openFor, setOpenFor] = useState<string | null>(null);
   const [parentFor, setParentFor] = useState<string | null>(null);
+  const [parentGateOpen, setParentGateOpen] = useState(false);
+  const [cannonModalOpen, setCannonModalOpen] = useState(false);
   const stickerCount = useSyncExternalStore(
     subscribeStickers,
     stickerSnapshot,
@@ -75,7 +79,7 @@ export function SiteAuth({
   }, [auth.status, auth.user, onAuthenticatedChange]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || parentGateOpen || cannonModalOpen) return;
     const outside = (event: PointerEvent) => {
       if (!containerRef.current?.contains(event.target as Node))
         setOpenFor(null);
@@ -92,7 +96,7 @@ export function SiteAuth({
       document.removeEventListener("pointerdown", outside);
       document.removeEventListener("keydown", escape);
     };
-  }, [isOpen]);
+  }, [cannonModalOpen, isOpen, parentGateOpen]);
 
   useEffect(() => {
     let controller: AbortController | undefined;
@@ -163,7 +167,11 @@ export function SiteAuth({
         className="site-auth"
         aria-label="HAMS 계정"
         onBlur={(event) => {
-          if (!event.currentTarget.contains(event.relatedTarget as Node | null))
+          if (
+            !parentGateOpen &&
+            !cannonModalOpen &&
+            !event.currentTarget.contains(event.relatedTarget as Node | null)
+          )
             setOpenFor(null);
         }}
       >
@@ -231,7 +239,10 @@ export function SiteAuth({
                     <button
                       type="button"
                       aria-pressed={isParent}
-                      onClick={() => setParentFor(auth.user!.id)}
+                      onClick={() => {
+                        lockAdmin();
+                        setParentGateOpen(true);
+                      }}
                     >
                       부모
                     </button>
@@ -263,6 +274,24 @@ export function SiteAuth({
                         <dd>{auth.user.membership?.plan || "-"}</dd>
                       </div>
                       <div>
+                        <dt>함포</dt>
+                        <dd className="account-cannon">
+                          <strong>
+                            {auth.user.hampoBalance?.toLocaleString("ko-KR") ||
+                              "0"}
+                            개
+                          </strong>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCannonModalOpen(true);
+                            }}
+                          >
+                            함포 충전
+                          </button>
+                        </dd>
+                      </div>
+                      <div>
                         <dt>AI 사용</dt>
                         <dd>
                           <span
@@ -277,15 +306,16 @@ export function SiteAuth({
                       <Link
                         href="/stickers"
                         onClick={() => setOpenFor(null)}
-                        style={{
-                          display: "grid",
-                          placeItems: "center",
-                          fontSize: 14,
-                          fontWeight: 800,
-                          color: "#4f6380",
-                        }}
+                        className="account-manage-link"
                       >
-                        스티커관리
+                        스티커획득수량관리
+                      </Link>
+                      <Link
+                        href="/password"
+                        onClick={() => setOpenFor(null)}
+                        className="account-manage-link"
+                      >
+                        암호관리
                       </Link>
                       {/* <button type="button" onClick={() => navigate("auth/profile", true)}>사이트변경</button> */}
                       <button
@@ -313,6 +343,13 @@ export function SiteAuth({
                     >
                       📖 캐릭터 도감 보기
                     </Link>
+                    <Link
+                      className="account-catalog account-drawings"
+                      href="/drawings"
+                      onClick={() => setOpenFor(null)}
+                    >
+                      🎨 저장된 이미지
+                    </Link>
                   </div>
                 )}
               </section>
@@ -328,6 +365,18 @@ export function SiteAuth({
           </button>
         )}
       </div>
+      <ParentPinDialog
+        open={parentGateOpen}
+        onCancel={() => setParentGateOpen(false)}
+        onUnlocked={() => {
+          if (auth.user) setParentFor(auth.user.id);
+          setParentGateOpen(false);
+        }}
+      />
+      <HampoChargeDialog
+        open={cannonModalOpen}
+        onClose={() => setCannonModalOpen(false)}
+      />
     </>
   );
 }

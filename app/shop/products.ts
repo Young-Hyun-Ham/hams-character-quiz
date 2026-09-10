@@ -9,6 +9,6 @@ export const SHOP_PRODUCTS = [
   { id: "strawberry-milk", name: "딸기우유", price: 120 },
   { id: "banana-milk", name: "바나나우유", price: 120 },
   { id: "milk", name: "흰우유", price: 100 },
-  { id: "snack-box", name: "스낵과자", price: 150 },
-  { id: "chips", name: "봉지과자", price: 150 },
+  { id: "chips", name: "과자", price: 150 },
+  { id: "sticker-reclaim", name: "스티커 회수", price: 1 },
 ] as const;

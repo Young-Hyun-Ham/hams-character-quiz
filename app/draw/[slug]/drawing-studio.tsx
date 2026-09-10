@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import type { QuizWorld } from "../../data";
+import { ParentPinDialog } from "../../components/parent-pin-dialog";
+import { HampoChargeDialog } from "../../components/hampo-charge-dialog";
+import { getAdminAuthorization, refreshStore } from "../../stickers/storage";
 
 type Point = { x: number; y: number };
 type Stroke = { color: string; size: number; points: Point[] };
@@ -59,6 +62,13 @@ function getKoreanInitials(value: string) {
     .replace(/\s+/g, "");
 }
 
+function boundedInteger(value: string, maximum: number) {
+  if (value === "") return 0;
+  const number = Number(value);
+  if (!Number.isFinite(number)) return 0;
+  return Math.min(maximum, Math.max(0, Math.trunc(number)));
+}
+
 export default function DrawingStudio({
   world,
   initialCharacterIndex,
@@ -78,10 +88,26 @@ export default function DrawingStudio({
   const [isDrawing, setIsDrawing] = useState(false);
   const [historyState, setHistoryState] = useState({ undo: 0, redo: 0 });
   const [referenceOpen, setReferenceOpen] = useState(false);
+  const [parentGateOpen, setParentGateOpen] = useState(false);
+  const [reviewImage, setReviewImage] = useState("");
+  const [score, setScore] = useState(0);
+  const [stickerAmount, setStickerAmount] = useState(0);
+  const [reviewBusy, setReviewBusy] = useState(false);
+  const [resultMessage, setResultMessage] = useState("");
+  const [savedDrawingId, setSavedDrawingId] = useState<string | null>(null);
+  const [imageName, setImageName] = useState("");
+  const [showImageName, setShowImageName] = useState(false);
+  const [imageSaved, setImageSaved] = useState(false);
+  const [hampoBalance, setHampoBalance] = useState(0);
+  const [hampoChargeOpen, setHampoChargeOpen] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawingPaperRef = useRef<HTMLDivElement>(null);
   const referenceButtonRef = useRef<HTMLButtonElement>(null);
   const referenceCloseRef = useRef<HTMLButtonElement>(null);
+  const reviewDialogRef = useRef<HTMLDialogElement>(null);
+  const successDialogRef = useRef<HTMLDialogElement>(null);
+  const failureDialogRef = useRef<HTMLDialogElement>(null);
+  const hampoConfirmDialogRef = useRef<HTMLDialogElement>(null);
   const strokesRef = useRef<Stroke[]>([]);
   const redoStrokesRef = useRef<Stroke[]>([]);
   const activeStrokeRef = useRef<Stroke | null>(null);
@@ -403,22 +429,149 @@ export default function DrawingStudio({
     selectCharacter(next);
   };
 
-  const saveDrawing = () => {
+  const drawingDataUrl = () => {
     const source = canvasRef.current;
-    if (!source) return;
+    if (!source) return "";
     const output = document.createElement("canvas");
     output.width = source.width;
     output.height = source.height;
     const context = output.getContext("2d");
-    if (!context) return;
+    if (!context) return "";
     context.fillStyle = "#ffffff";
     context.fillRect(0, 0, output.width, output.height);
     context.drawImage(source, 0, 0);
-    const link = document.createElement("a");
-    link.download = `${character.name}-그리기.png`;
-    link.href = output.toDataURL("image/png");
-    link.click();
+    return output.toDataURL("image/png");
   };
+
+  const openReview = () => {
+    const image = drawingDataUrl();
+    if (!image) return;
+    setReviewImage(image);
+    setScore(0);
+    setStickerAmount(0);
+    setParentGateOpen(false);
+    requestAnimationFrame(() => reviewDialogRef.current?.showModal());
+  };
+
+  async function saveGrade(event: React.FormEvent) {
+    event.preventDefault();
+    const adminHash = getAdminAuthorization();
+    if (!adminHash) {
+      reviewDialogRef.current?.close();
+      setParentGateOpen(true);
+      return;
+    }
+    setReviewBusy(true);
+    try {
+      const response = await fetch("/api/drawings", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "grade",
+          adminHash,
+          characterName: character.name,
+          worldSlug: world.slug,
+          score,
+          stickers: stickerAmount,
+        }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw Error(payload.error ?? "save_failed");
+      await refreshStore();
+      setSavedDrawingId(payload.drawingId as string);
+      setResultMessage(
+        `점수 ${score}점과 스티커 ${stickerAmount}개를 저장했어요.`,
+      );
+      setShowImageName(false);
+      setImageName(`${character.name} 그리기`);
+      setImageSaved(false);
+      reviewDialogRef.current?.close();
+      successDialogRef.current?.showModal();
+    } catch {
+      reviewDialogRef.current?.close();
+      setResultMessage(
+        "점수와 스티커를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.",
+      );
+      failureDialogRef.current?.showModal();
+    } finally {
+      setReviewBusy(false);
+    }
+  }
+
+  async function prepareReviewedImageSave() {
+    setReviewBusy(true);
+    try {
+      const response = await fetch("/api/drawings", {
+        cache: "no-store",
+        credentials: "same-origin",
+      });
+      if (!response.ok) throw Error("quota_check_failed");
+      const payload = (await response.json()) as {
+        savedCount: number;
+        hampoBalance: number;
+      };
+      setHampoBalance(payload.hampoBalance);
+      if (payload.savedCount >= 10) hampoConfirmDialogRef.current?.showModal();
+      else await saveReviewedImage(false);
+    } catch {
+      successDialogRef.current?.close();
+      setResultMessage(
+        "저장 가능 여부를 확인하지 못했어요. 잠시 후 다시 시도해 주세요.",
+      );
+      failureDialogRef.current?.showModal();
+    } finally {
+      setReviewBusy(false);
+    }
+  }
+
+  async function saveReviewedImage(confirmHampoCharge: boolean) {
+    const adminHash = getAdminAuthorization();
+    if (!savedDrawingId || !adminHash || !imageName.trim()) return;
+    setReviewBusy(true);
+    try {
+      const response = await fetch("/api/drawings", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "saveImage",
+          adminHash,
+          drawingId: savedDrawingId,
+          imageName,
+          imageData: reviewImage,
+          confirmHampoCharge,
+        }),
+      });
+      const payload = await response.json();
+      if (!response.ok && payload.error === "hampo_required") {
+        setHampoBalance(Number(payload.hampoBalance ?? 0));
+        hampoConfirmDialogRef.current?.showModal();
+        return;
+      }
+      if (!response.ok && payload.error === "insufficient_hampo") {
+        hampoConfirmDialogRef.current?.close();
+        setHampoChargeOpen(true);
+        return;
+      }
+      if (!response.ok) throw Error("image_save_failed");
+      hampoConfirmDialogRef.current?.close();
+      setImageSaved(true);
+      setResultMessage(
+        payload.hampoCharged
+          ? "1함포를 사용하고 그림 이미지를 저장했어요."
+          : "점수와 스티커, 그림 이미지를 모두 저장했어요.",
+      );
+    } catch {
+      successDialogRef.current?.close();
+      setResultMessage(
+        "이미지를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.",
+      );
+      failureDialogRef.current?.showModal();
+    } finally {
+      setReviewBusy(false);
+    }
+  }
 
   const visibleCharacters = filteredCharacters.slice(0, visibleCount);
 
@@ -697,14 +850,14 @@ export default function DrawingStudio({
             <button
               className="save-drawing"
               type="button"
-              onClick={saveDrawing}
+              onClick={() => setParentGateOpen(true)}
               disabled={!hasDrawing}
             >
-              ↓ 내 그림 저장하기
+              엄마·아빠에게 채점 부탁하기
             </button>
           </div>
           <p className="privacy-note">
-            그림은 기기 안에서만 만들어지며 서버에 저장되지 않아요.
+            부모님이 채점한 뒤 선택한 그림만 저장돼요.
           </p>
         </section>
       </div>
@@ -741,6 +894,178 @@ export default function DrawingStudio({
           </section>
         </div>
       )}
+      <ParentPinDialog
+        open={parentGateOpen}
+        onCancel={() => setParentGateOpen(false)}
+        onUnlocked={openReview}
+      />
+      <dialog ref={reviewDialogRef} className="drawing-review-dialog">
+        <button
+          type="button"
+          className="drawing-dialog-close"
+          onClick={() => reviewDialogRef.current?.close()}
+          aria-label="채점 화면 닫기"
+        >
+          ×
+        </button>
+        <span>PARENT REVIEW</span>
+        <h2>{character.name} 그림을 채점해 주세요</h2>
+        {reviewImage && (
+          <Image
+            src={reviewImage}
+            alt={`${character.name} 아이 그림`}
+            width={720}
+            height={540}
+            unoptimized
+          />
+        )}
+        <form onSubmit={saveGrade}>
+          <label>
+            <span>점수</span>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              step="1"
+              required
+              value={score}
+              onFocus={(event) => event.currentTarget.select()}
+              onKeyDown={(event) => {
+                if (score === 0 && /^\d$/.test(event.key)) {
+                  event.preventDefault();
+                  setScore(Number(event.key));
+                }
+              }}
+              onChange={(event) =>
+                setScore(boundedInteger(event.target.value, 100))
+              }
+            />
+            <b>점</b>
+          </label>
+          <label>
+            <span>스티커</span>
+            <input
+              type="number"
+              min="0"
+              max="999"
+              step="1"
+              required
+              value={stickerAmount}
+              onFocus={(event) => event.currentTarget.select()}
+              onKeyDown={(event) => {
+                if (stickerAmount === 0 && /^\d$/.test(event.key)) {
+                  event.preventDefault();
+                  setStickerAmount(Number(event.key));
+                }
+              }}
+              onChange={(event) =>
+                setStickerAmount(boundedInteger(event.target.value, 999))
+              }
+            />
+            <b>개</b>
+          </label>
+          <button disabled={reviewBusy}>
+            {reviewBusy ? "저장 중…" : "점수와 스티커 저장"}
+          </button>
+        </form>
+      </dialog>
+      <dialog
+        ref={successDialogRef}
+        className="drawing-result-dialog"
+        onCancel={(event) => event.preventDefault()}
+      >
+        <span aria-hidden="true">🎉</span>
+        <h2>저장 완료</h2>
+        <p>{resultMessage}</p>
+        {showImageName && !imageSaved && (
+          <label className="drawing-image-name">
+            <span>그림 이름</span>
+            <input
+              value={imageName}
+              maxLength={60}
+              onChange={(event) => setImageName(event.target.value)}
+              autoFocus
+            />
+          </label>
+        )}
+        <div>
+          {!imageSaved && (
+            <button
+              type="button"
+              disabled={reviewBusy || (showImageName && !imageName.trim())}
+              onClick={() =>
+                showImageName
+                  ? void prepareReviewedImageSave()
+                  : setShowImageName(true)
+              }
+            >
+              {reviewBusy
+                ? "저장 중…"
+                : showImageName
+                  ? "이 이름으로 저장"
+                  : "이미지 저장"}
+            </button>
+          )}
+          <button
+            type="button"
+            className="drawing-result-close"
+            onClick={() => successDialogRef.current?.close()}
+          >
+            닫기
+          </button>
+        </div>
+      </dialog>
+      <dialog ref={failureDialogRef} className="drawing-result-dialog">
+        <span aria-hidden="true">😥</span>
+        <h2>저장 실패</h2>
+        <p>{resultMessage}</p>
+        <button type="button" onClick={() => failureDialogRef.current?.close()}>
+          확인
+        </button>
+      </dialog>
+      <dialog
+        ref={hampoConfirmDialogRef}
+        className="drawing-result-dialog hampo-confirm-dialog"
+        onCancel={() => hampoConfirmDialogRef.current?.close()}
+      >
+        <div className="hampo-dialog-header">
+          <span className="brand-mark">
+            <b>C</b>
+          </span>
+          <h1>유료 이미지 저장</h1>
+        </div>
+        <p>
+          추가 저장 하시려면 <b>1함포(100원)</b> 필요 합니다.
+          <br /> 저장 하시겠습니까?
+        </p>
+        <small>
+          현재 보유 함포: {hampoBalance?.toLocaleString("ko-KR") || "0"}개
+        </small>
+        <div>
+          <button
+            type="button"
+            onClick={() => {
+              if (hampoBalance < 1) {
+                hampoConfirmDialogRef.current?.close();
+                setHampoChargeOpen(true);
+              } else void saveReviewedImage(true);
+            }}
+          >
+            확인
+          </button>
+          <button
+            type="button"
+            className="drawing-result-close"
+            onClick={() => hampoConfirmDialogRef.current?.close()}
+          >
+            취소
+          </button>
+        </div>
+      </dialog>
+      <HampoChargeDialog
+        open={hampoChargeOpen}
+        onClose={() => setHampoChargeOpen(false)}
+      />
     </main>
   );
 }

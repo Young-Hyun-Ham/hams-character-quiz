@@ -9,12 +9,15 @@ export function readCollectedCards() {
 }
 
 export async function refreshCollectedCards() {
-  const response = await fetch("/api/catalog", { cache: "no-store", credentials: "same-origin" });
+  const response = await fetch("/api/catalog", {
+    cache: "no-store",
+    credentials: "same-origin",
+  });
   if (!response.ok) {
     if (response.status === 401) collectedCards = new Set();
     else throw new Error("도감 정보를 불러오지 못했어요.");
   } else {
-    const payload = await response.json() as { cards: string[] };
+    const payload = (await response.json()) as { cards: string[] };
     collectedCards = new Set(payload.cards);
   }
   window.dispatchEvent(new Event("catalog-changed"));
@@ -22,8 +25,18 @@ export async function refreshCollectedCards() {
 }
 
 export async function collectCard(world: string, image: string) {
-  const response = await fetch("/api/catalog", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ world, image }) });
-  if (!response.ok) throw new Error(response.status === 401 ? "로그인이 필요합니다." : "도감을 저장하지 못했어요.");
+  const response = await fetch("/api/catalog", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ world, image }),
+  });
+  if (!response.ok)
+    throw new Error(
+      response.status === 401
+        ? "로그인이 필요합니다."
+        : "도감을 저장하지 못했어요.",
+    );
   const key = cardKey(world, image);
   const added = !collectedCards.has(key);
   collectedCards.add(key);

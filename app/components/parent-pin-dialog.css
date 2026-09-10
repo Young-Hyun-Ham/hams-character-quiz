@@ -1,0 +1,77 @@
+.parent-pin-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(420px, calc(100% - 32px));
+  max-height: min(620px, calc(100dvh - 32px));
+  padding: 30px;
+  border: 0;
+  border-radius: 24px;
+  color: #334155;
+  text-align: center;
+  box-shadow: 0 24px 80px rgba(30, 41, 59, 0.28);
+}
+.parent-pin-dialog::backdrop {
+  background: rgba(30, 41, 59, 0.52);
+  backdrop-filter: blur(3px);
+}
+.parent-pin-dialog > span {
+  color: #7c6ce7;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+.parent-pin-dialog h2 {
+  margin: 8px 0 6px;
+  font-size: 26px;
+}
+.parent-pin-dialog p {
+  margin: 8px 0 18px;
+  color: #64748b;
+  line-height: 1.55;
+}
+.parent-pin-dialog form {
+  display: grid;
+  gap: 12px;
+}
+.parent-pin-dialog input {
+  width: 100%;
+  padding: 14px;
+  border: 2px solid #dce2eb;
+  border-radius: 14px;
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 0.3em;
+  text-align: center;
+}
+.parent-pin-dialog button[type="submit"],
+.parent-pin-dialog > a {
+  padding: 13px 18px;
+  border: 0;
+  border-radius: 14px;
+  background: #7465df;
+  color: #fff;
+  font-weight: 900;
+  text-decoration: none;
+  cursor: pointer;
+}
+.parent-pin-dialog button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.parent-pin-dialog .parent-pin-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  font-size: 25px;
+  cursor: pointer;
+}
+.parent-pin-dialog .parent-pin-error {
+  margin: 0;
+  color: #dc4c64;
+  font-size: 13px;
+  font-weight: 800;
+}

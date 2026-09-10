@@ -21,20 +21,42 @@ function isAllowedImage(value: string) {
 export async function GET(request: Request) {
   const id = userId(request);
   if (!id) return Response.json({ error: "login_required" }, { status: 401 });
-  const snapshot = await getAdminFirestore().collection("hamsCharacterQuizUsers").doc(id).get();
+  const snapshot = await getAdminFirestore()
+    .collection("hamsCharacterQuizUsers")
+    .doc(id)
+    .get();
   const cards = snapshot.data()?.catalogCards;
-  return Response.json({ cards: Array.isArray(cards) ? cards.filter((card): card is string => typeof card === "string") : [] });
+  return Response.json({
+    cards: Array.isArray(cards)
+      ? cards.filter((card): card is string => typeof card === "string")
+      : [],
+  });
 }
 
 export async function POST(request: Request) {
   try {
     const id = userId(request);
     if (!id) return Response.json({ error: "login_required" }, { status: 401 });
-    const body = await request.json() as { world?: unknown; image?: unknown };
-    if (typeof body.world !== "string" || typeof body.image !== "string" || !isAllowedImage(body.image) || body.world.length > 40 || body.image.length > 500)
+    const body = (await request.json()) as { world?: unknown; image?: unknown };
+    if (
+      typeof body.world !== "string" ||
+      typeof body.image !== "string" ||
+      !isAllowedImage(body.image) ||
+      body.world.length > 40 ||
+      body.image.length > 500
+    )
       return Response.json({ error: "invalid_card" }, { status: 400 });
     const key = `${body.world}:${body.image}`;
-    await getAdminFirestore().collection("hamsCharacterQuizUsers").doc(id).set({ catalogCards: FieldValue.arrayUnion(key), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    await getAdminFirestore()
+      .collection("hamsCharacterQuizUsers")
+      .doc(id)
+      .set(
+        {
+          catalogCards: FieldValue.arrayUnion(key),
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
     return Response.json({ collected: true, key });
   } catch (error) {
     console.error("Failed to collect catalog card", error);

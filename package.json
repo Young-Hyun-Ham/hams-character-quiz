@@ -10,7 +10,7 @@
     "pokemon:sync": "node scripts/generate-pokemon-data.mjs"
   },
   "dependencies": {
-    "@hams-fam/sso-client": "^0.1.7",
+    "@hams-fam/sso-client": "^0.1.8",
     "@mui/icons-material": "^9.3.1",
     "@mui/material": "^9.3.1",
     "firebase-admin": "14.3.0",

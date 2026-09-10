@@ -195,7 +195,8 @@ export default function StickersPage() {
           </form>
         )}
         <small>
-          스티커, 구매 내역과 관리자 설정은 로그인한 계정의 서버 데이터로 저장돼요.
+          스티커, 구매 내역과 관리자 설정은 로그인한 계정의 서버 데이터로
+          저장돼요.
         </small>
       </section>
       <dialog

@@ -1,0 +1,205 @@
+.saved-drawings-shell {
+  min-height: 100dvh;
+  padding: 0 7vw 45px;
+  background: linear-gradient(145deg, #f6f3ff, #fff8e8);
+  color: #354057;
+}
+.saved-drawings-panel {
+  max-width: 1080px;
+  margin: 34px auto;
+}
+.saved-drawings-panel > span {
+  color: #7465df;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+.saved-drawings-panel h1 {
+  margin: 8px 0;
+  font-size: 32px;
+}
+.saved-drawings-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.saved-drawings-heading h1 {
+  flex: 1 1 auto;
+  white-space: nowrap;
+}
+.saved-drawings-heading > div {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 12px;
+  background: #ebe8f5;
+}
+.saved-drawings-heading button {
+  padding: 9px 14px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #657087;
+  font-weight: 800;
+  cursor: pointer;
+}
+.saved-drawings-heading button[aria-pressed="true"] {
+  background: #fff;
+  color: #5949c5;
+  box-shadow: 0 2px 8px #35405718;
+}
+.saved-drawings-panel > p {
+  color: #687486;
+}
+.saved-drawings-grid {
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 18px;
+}
+.saved-drawings-grid article {
+  position: relative;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 10px 30px #35405714;
+  overflow: hidden;
+}
+.saved-drawings-grid .saved-drawing-open {
+  width: 100%;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  color: #354057;
+  text-align: left;
+  cursor: pointer;
+}
+.saved-drawings-grid img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4/3;
+  border-radius: 14px;
+  object-fit: contain;
+  background: #fff;
+}
+.saved-drawings-grid strong {
+  padding-inline: 4px;
+  font-size: 16px;
+}
+.saved-drawings-grid span {
+  padding: 0 4px 4px;
+  color: #7465df;
+  font-size: 13px;
+  font-weight: 800;
+}
+.saved-drawings-grid .saved-drawing-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: #354057;
+}
+.saved-drawing-title time {
+  flex: 0 0 auto;
+  color: #8993a4;
+  font-size: 11px;
+  font-weight: 700;
+}
+.saved-drawings-grid .saved-drawing-delete {
+  position: absolute;
+  z-index: 2;
+  top: 20px;
+  right: 20px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: #dc3545;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+  box-shadow: 0 3px 10px #7f1d1d44;
+  cursor: pointer;
+}
+.saved-drawing-delete:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+.saved-drawings-pagination {
+  margin-top: 28px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.saved-drawings-pagination button {
+  min-width: 40px;
+  min-height: 40px;
+  padding: 7px 11px;
+  border: 1px solid #ddd8ef;
+  border-radius: 10px;
+  background: #fff;
+  color: #5e687b;
+  font-weight: 800;
+  cursor: pointer;
+}
+.saved-drawings-pagination button[aria-current="page"] {
+  border-color: #7465df;
+  background: #7465df;
+  color: #fff;
+}
+.saved-drawings-pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.saved-drawings-empty {
+  margin-top: 26px;
+  padding: 50px;
+  border-radius: 22px;
+  background: #fff;
+  text-align: center;
+}
+.saved-drawing-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(900px, calc(100% - 28px));
+  max-height: calc(100dvh - 28px);
+  padding: 24px;
+  overflow: auto;
+  border: 0;
+  border-radius: 24px;
+  color: #354057;
+  text-align: center;
+}
+.saved-drawing-dialog::backdrop {
+  background: #1e293b99;
+  backdrop-filter: blur(3px);
+}
+.saved-drawing-dialog img {
+  width: 100%;
+  height: auto;
+  max-height: 72dvh;
+  object-fit: contain;
+}
+.saved-drawing-dialog p {
+  color: #7465df;
+  font-weight: 900;
+}
+@media (max-width: 560px) {
+  .saved-drawings-shell {
+    padding-inline: 18px;
+  }
+  .saved-drawings-heading {
+    gap: 8px;
+  }
+  .saved-drawings-heading h1 {
+    font-size: 25px;
+  }
+  .saved-drawings-heading button {
+    padding-inline: 10px;
+    font-size: 12px;
+  }
+}

@@ -7,5 +7,6 @@ export type HeaderUser = {
   birthDate: string | null;
   gender: SsoGender | null;
   aiEnabled: boolean;
+  hampoBalance: number;
   membership: { serviceName: string; plan: SsoServicePlan } | null;
 };

@@ -1,0 +1,54 @@
+.hampo-charge-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(380px, calc(100% - 32px));
+  padding: 30px;
+  border: 0;
+  border-radius: 22px;
+  color: #354057;
+  text-align: center;
+  box-shadow: 0 24px 80px #1e293b4d;
+}
+.hampo-charge-dialog::backdrop {
+  background: #1e293b85;
+  backdrop-filter: blur(3px);
+}
+.hampo-dialog-header {
+  position: relative;
+  width: 100%;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 22px;
+}
+.hampo-dialog-header .brand-mark {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%) rotate(-5deg);
+}
+.hampo-dialog-header h1 {
+  margin: 0;
+  color: #354057;
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1.25;
+  text-align: center;
+  white-space: nowrap;
+}
+.hampo-charge-dialog p {
+  margin: 8px 0 20px;
+  color: #687486;
+}
+.hampo-charge-dialog button {
+  width: 100%;
+  min-height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: #7465df;
+  color: #fff;
+  font-weight: 900;
+  cursor: pointer;
+}
