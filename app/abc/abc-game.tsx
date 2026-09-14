@@ -30,7 +30,7 @@ const TITLES: Record<Mode, string> = {
   listen: "듣고 문제 맞추기",
   speak: "보고 말하기",
 };
-const HANDWRITING_PASSING_SCORE = 90;
+const HANDWRITING_PASSING_SCORE = 95;
 const OUTSIDE_GUIDE_PENALTY = 100;
 const INSIDE_GUIDE_PENALTY = 50;
 

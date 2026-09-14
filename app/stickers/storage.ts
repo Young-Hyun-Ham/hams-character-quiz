@@ -59,8 +59,27 @@ export function readStore(): Data {
   return cachedData;
 }
 function applyState(data: Data) {
-  cachedData = data;
+  cachedData = {
+    ...data,
+    configVersion: gameRewardConfig.version,
+    rules: { ...RULES, ...(data.rules ?? {}) },
+    abcCatalogChance:
+      typeof data.abcCatalogChance === "number"
+        ? data.abcCatalogChance
+        : gameRewardConfig.abcCatalog.chance,
+    entries: Array.isArray(data.entries) ? data.entries : [],
+    purchases: Array.isArray(data.purchases) ? data.purchases : [],
+  };
   window.dispatchEvent(new Event("stickers-changed"));
+}
+async function responsePayload(response: Response) {
+  const text = await response.text();
+  if (!text) return { error: "empty_response" } as Record<string, unknown>;
+  try {
+    return JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    return { error: "invalid_response" } as Record<string, unknown>;
+  }
 }
 async function request(action: Record<string, unknown>) {
   const response = await fetch("/api/stickers", {
@@ -69,14 +88,16 @@ async function request(action: Record<string, unknown>) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(action),
   });
-  const payload = await response.json();
+  const payload = await responsePayload(response);
   if (!response.ok)
     throw Error(
       payload.error === "login_required"
         ? "로그인이 필요합니다."
         : payload.error === "not_enough_stickers"
           ? "스티커가 부족해요."
-          : "스티커 정보를 저장하지 못했어요.",
+          : payload.error === "invalid_rules"
+            ? "기존 설정을 갱신하지 못했어요. 새로고침 후 다시 시도해 주세요."
+            : "서버 응답을 확인하지 못했어요. 잠시 후 다시 시도해 주세요.",
     );
   if (payload.state) applyState(payload.state as Data);
   return payload;
@@ -206,7 +227,7 @@ export async function unlock(pin: string, confirmation?: string) {
         throw Error(
           data.admin.failures >= 5
             ? "관리자에게 문의 하세요."
-            : `암호가 일치하지 않아요. (${data.admin.failures}/5회)`,
+            : `암호가 틀렸어요. (${data.admin.failures}/5회)`,
         );
       }
       data.admin.failures = 0;

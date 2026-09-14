@@ -71,7 +71,7 @@ export function ParentPinDialog({
     return () => {
       cancelled = true;
     };
-  }, [open]);
+  }, [open, router]);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
