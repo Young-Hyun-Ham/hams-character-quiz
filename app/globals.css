@@ -412,6 +412,34 @@ a {
   transform: translateY(-8px) rotate(-0.4deg);
   box-shadow: 0 23px 42px rgba(48, 57, 76, 0.15);
 }
+.abc-world-card {
+  --card: #7c5ce0;
+  --soft: #f2edff;
+  --delay: 0ms;
+  color: inherit;
+  text-decoration: none;
+}
+.abc-world-card .abc-character > span {
+  position: relative;
+  z-index: 1;
+  font-size: 108px;
+  line-height: 1;
+}
+.abc-world-card {
+  text-align: left;
+  cursor: pointer;
+}
+.abc-modal-character > span {
+  font-size: 74px;
+}
+.abc-activity-options {
+  grid-template-columns: 1fr;
+}
+.abc-activity-options .activity-option {
+  grid-column: 1;
+  width: 100%;
+  min-height: 82px;
+}
 .card-sparkles {
   color: var(--card);
   opacity: 0.6;

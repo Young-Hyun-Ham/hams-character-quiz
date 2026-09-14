@@ -8,6 +8,7 @@ export const RULES = Object.fromEntries(
   ]),
 ) as Record<RewardKind, number>;
 export const LABELS: Record<RewardKind, string> = {
+  abc: "ABC 영어교실 · 10문제 중 9개 이상",
   quiz: "이름찾기 · 10문제 중 9개 이상",
   soundbook: "사운드북 · 10문제 중 7개 이상",
   memory1: "같은 그림 찾기 · 1단계 완료",
@@ -40,6 +41,7 @@ export type ShopPurchase = {
 type Data = {
   configVersion?: number;
   rules: typeof RULES;
+  abcCatalogChance?: number;
   entries: Entry[];
   purchases?: ShopPurchase[];
   admin: { salt: string; hash: string; failures: number } | null;
@@ -47,6 +49,7 @@ type Data = {
 let cachedData: Data = {
   configVersion: gameRewardConfig.version,
   rules: { ...RULES },
+  abcCatalogChance: gameRewardConfig.abcCatalog.chance,
   entries: [],
   purchases: [],
   admin: null,
@@ -87,6 +90,7 @@ export async function refreshStore() {
       applyState({
         configVersion: gameRewardConfig.version,
         rules: { ...RULES },
+        abcCatalogChance: gameRewardConfig.abcCatalog.chance,
         entries: [],
         purchases: [],
         admin: null,
@@ -250,6 +254,22 @@ export async function saveRules(rules: typeof RULES) {
     )
       throw Error("스티커 수량은 0~999의 정수로 입력해 주세요.");
     data.rules = { ...rules };
+    await request({ action: "replace", state: data });
+  });
+}
+
+export function abcCatalogChance(data = readStore()) {
+  return data.abcCatalogChance ?? gameRewardConfig.abcCatalog.chance;
+}
+
+export async function saveAbcCatalogChance(chance: number) {
+  return locked(async () => {
+    const data = readStore();
+    if (!isAdminAuthorized())
+      throw Error("관리자 비밀번호를 다시 확인해 주세요.");
+    if (!Number.isInteger(chance) || chance < 0 || chance > 100)
+      throw Error("도감 확률은 0~100의 정수로 입력해 주세요.");
+    data.abcCatalogChance = chance / 100;
     await request({ action: "replace", state: data });
   });
 }

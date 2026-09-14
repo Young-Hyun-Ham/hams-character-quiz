@@ -19,41 +19,120 @@
  */
 export const gameRewardConfig = {
   /** 저장된 예전 기본 보상값을 새 설정으로 갱신할 때 사용하는 버전입니다. */
-  version: 8,
+  version: 9,
 
   stickerRewards: {
+    /** ABC 영어교실: 10문제 중 9문제 이상 맞히면 3개를 지급합니다. */
+    abc: {
+      amount: 3,
+      requiredTotal: 10,
+      minimumCorrect: 9,
+      requirePerfect: false,
+      chance: 1,
+    },
     /** 이름찾기: 10문제를 모두 풀고 9문제 이상 맞히면 3개를 항상 지급합니다. */
-    quiz: { amount: 3, requiredTotal: 10, minimumCorrect: 9, requirePerfect: false, chance: 1 },
+    quiz: {
+      amount: 3,
+      requiredTotal: 10,
+      minimumCorrect: 9,
+      requirePerfect: false,
+      chance: 1,
+    },
 
     /** 사운드북: 10문제를 모두 풀고 7문제 이상 맞히면 3개를 항상 지급합니다. */
-    soundbook: { amount: 3, requiredTotal: 10, minimumCorrect: 7, requirePerfect: false, chance: 1 },
+    soundbook: {
+      amount: 3,
+      requiredTotal: 10,
+      minimumCorrect: 7,
+      requirePerfect: false,
+      chance: 1,
+    },
 
     /** 같은 그림 찾기 1단계: 모든 짝을 찾으면 1개를 지급합니다. */
-    memory1: { amount: 1, requiredTotal: null, minimumCorrect: 0, requirePerfect: true, chance: 1 },
+    memory1: {
+      amount: 1,
+      requiredTotal: null,
+      minimumCorrect: 0,
+      requirePerfect: true,
+      chance: 1,
+    },
 
     /** 같은 그림 찾기 2단계: 모든 짝을 찾으면 3개를 지급합니다. */
-    memory2: { amount: 3, requiredTotal: null, minimumCorrect: 0, requirePerfect: true, chance: 1 },
+    memory2: {
+      amount: 3,
+      requiredTotal: null,
+      minimumCorrect: 0,
+      requirePerfect: true,
+      chance: 1,
+    },
 
     /** 같은 그림 찾기 3단계: 모든 짝을 찾으면 10개를 지급합니다. */
-    memory3: { amount: 10, requiredTotal: null, minimumCorrect: 0, requirePerfect: true, chance: 1 },
+    memory3: {
+      amount: 10,
+      requiredTotal: null,
+      minimumCorrect: 0,
+      requirePerfect: true,
+      chance: 1,
+    },
 
     /** 몬스터볼 게임: 계산까지 완료하면 포획 성공 여부와 별개로 50% 확률로 1개를 지급합니다. */
-    pokeball: { amount: 1, requiredTotal: 1, minimumCorrect: 1, requirePerfect: true, chance: 0.5 },
+    pokeball: {
+      amount: 1,
+      requiredTotal: 1,
+      minimumCorrect: 1,
+      requirePerfect: true,
+      chance: 0.5,
+    },
 
     /** 귀신 퇴치 비밀번호: 두 문제를 모두 풀면 고스트 칩 1개를 50% 확률로 지급합니다. */
-    ghostChip: { amount: 1, requiredTotal: 2, minimumCorrect: 2, requirePerfect: true, chance: 0.5 },
+    ghostChip: {
+      amount: 1,
+      requiredTotal: 2,
+      minimumCorrect: 2,
+      requirePerfect: true,
+      chance: 0.5,
+    },
 
     /** 마법 디저트 파티: 두 문제를 모두 풀면 파티 스티커 1개를 50% 확률로 지급합니다. */
-    magicDessert: { amount: 1, requiredTotal: 2, minimumCorrect: 2, requirePerfect: true, chance: 0.5 },
+    magicDessert: {
+      amount: 1,
+      requiredTotal: 2,
+      minimumCorrect: 2,
+      requirePerfect: true,
+      chance: 0.5,
+    },
 
     /** 디저트 타임: 시계를 맞히면 시간 스티커 1개를 50% 확률로 지급합니다. */
-    dessertTime: { amount: 1, requiredTotal: 1, minimumCorrect: 1, requirePerfect: true, chance: 0.5 },
+    dessertTime: {
+      amount: 1,
+      requiredTotal: 1,
+      minimumCorrect: 1,
+      requirePerfect: true,
+      chance: 0.5,
+    },
 
     /** 마법의 비밀 지도: 여덟 조각을 완성하면 지도 스티커 1개를 20% 확률로 지급합니다. */
-    secretMap: { amount: 1, requiredTotal: 8, minimumCorrect: 8, requirePerfect: true, chance: 0.2 },
+    secretMap: {
+      amount: 1,
+      requiredTotal: 8,
+      minimumCorrect: 8,
+      requirePerfect: true,
+      chance: 0.2,
+    },
 
     /** 포켓몬 가방 정리: 분류와 개수 세기를 완료하면 스티커 1개를 20% 확률로 지급합니다. */
-    pokemonBag: { amount: 1, requiredTotal: 1, minimumCorrect: 1, requirePerfect: true, chance: 0.2 },
+    pokemonBag: {
+      amount: 1,
+      requiredTotal: 1,
+      minimumCorrect: 1,
+      requirePerfect: true,
+      chance: 0.2,
+    },
+  },
+
+  abcCatalog: {
+    /** ABC 영어교실에서 9점 이상일 때 알파벳 도감 카드를 얻을 기본 확률입니다. */
+    chance: 0.2,
   },
 
   quizCapture: {

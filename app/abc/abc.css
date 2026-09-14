@@ -1,0 +1,412 @@
+.abc-shell,
+.abc-game-shell {
+  min-height: 100dvh;
+  padding-bottom: 60px;
+  background: linear-gradient(150deg, #fff9dc, #e9f8ff 48%, #f5edff);
+  color: #30415d;
+}
+.abc-hero {
+  width: min(940px, calc(100% - 32px));
+  margin: 38px auto 25px;
+  text-align: center;
+}
+.abc-hero > span,
+.abc-kicker {
+  color: #7b61c9;
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: 0.16em;
+}
+.abc-hero h1 {
+  margin: 8px 0;
+  font-size: clamp(36px, 7vw, 68px);
+}
+.abc-hero p {
+  font-weight: 800;
+  color: #66738a;
+}
+.abc-lessons {
+  width: min(1080px, calc(100% - 32px));
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+.abc-lessons a {
+  min-height: 260px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid #fff;
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.9);
+  color: inherit;
+  text-align: center;
+  text-decoration: none;
+  box-shadow: 0 15px 35px rgba(62, 76, 112, 0.13);
+  transition: transform 0.18s ease;
+}
+.abc-lessons a:hover {
+  transform: translateY(-5px);
+}
+.abc-lessons a > span {
+  font-size: 58px;
+}
+.abc-lessons h2 {
+  margin: 12px 0 5px;
+}
+.abc-lessons p {
+  min-height: 44px;
+  color: #738097;
+  font-weight: 700;
+}
+.abc-lessons b {
+  color: #7655cf;
+}
+.abc-catalog-link {
+  width: fit-content;
+  margin: 28px auto;
+  padding: 13px 20px;
+  display: block;
+  border-radius: 999px;
+  background: #7655cf;
+  color: #fff;
+  font-weight: 900;
+  text-decoration: none;
+}
+.abc-game-header {
+  width: min(900px, calc(100% - 28px));
+  margin: 22px auto 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.abc-game-header a {
+  color: #6750aa;
+  font-weight: 900;
+  text-decoration: none;
+}
+.abc-game-header div {
+  display: flex;
+  gap: 9px;
+}
+.abc-game-header span,
+.abc-game-header b {
+  padding: 8px 13px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 5px 15px rgba(56, 69, 98, 0.1);
+}
+.abc-question-card,
+.abc-result {
+  width: min(760px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: clamp(22px, 5vw, 48px);
+  border: 4px solid #fff;
+  border-radius: 34px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 20px 55px rgba(57, 69, 103, 0.15);
+  text-align: center;
+}
+.abc-question-card h1 {
+  margin: 7px 0 22px;
+  font-size: clamp(22px, 4vw, 35px);
+}
+.abc-picture {
+  min-height: 245px;
+  display: grid;
+  place-content: center;
+  border: 3px dashed #d7c9ff;
+  border-radius: 28px;
+  background: #fbf9ff;
+}
+.abc-mode-name .abc-picture {
+  min-height: 125px;
+}
+.abc-mode-name .abc-picture div {
+  font-size: clamp(42px, 7vw, 66px);
+}
+.abc-writing-area {
+  margin-top: 16px;
+}
+.abc-writing-paper {
+  height: 245px;
+  position: relative;
+  overflow: hidden;
+  border: 3px solid #d9d0f5;
+  border-radius: 24px;
+  background: #fff;
+  container-type: inline-size;
+}
+.abc-writing-guide,
+.abc-writing-paper canvas {
+  position: absolute;
+  inset: 0;
+}
+.abc-writing-guide {
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.abc-writing-guide text {
+  fill: none;
+  stroke: rgba(124, 92, 224, 0.35);
+  stroke-width: 2px;
+  stroke-dasharray: 1 5;
+  stroke-linecap: round;
+  font-family: Arial, "Apple SD Gothic Neo", sans-serif;
+  font-size: min(112px, var(--abc-guide-font-size, 14cqw));
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+.abc-writing-paper canvas {
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: crosshair;
+}
+.abc-handwriting-score {
+  color: #66738a;
+  font-size: 14px;
+  font-weight: 800;
+}
+.abc-handwriting-score b {
+  color: #7655cf;
+  font-size: 18px;
+}
+.abc-writing-actions {
+  margin-top: 11px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+.abc-writing-actions button {
+  padding: 12px 18px;
+  border: 2px solid #d9d0f5;
+  border-radius: 14px;
+  background: #fff;
+  color: #6750aa;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+.abc-writing-actions button:last-child {
+  border-color: #7757d0;
+  background: #7757d0;
+  color: #fff;
+}
+.abc-writing-actions button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+.abc-picture div {
+  max-width: 560px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  font-size: clamp(66px, 12vw, 112px);
+  line-height: 1;
+}
+.abc-picture small {
+  margin-top: 12px;
+  color: #7a8495;
+  font-size: 16px;
+  font-weight: 900;
+}
+.abc-answer-form {
+  margin-top: 22px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+.abc-answer-form input {
+  width: min(390px, 65%);
+  padding: 14px 17px;
+  border: 3px solid #d9d0f5;
+  border-radius: 15px;
+  font-size: 21px;
+  font-weight: 850;
+  text-align: center;
+}
+.abc-answer-form button,
+.abc-sound-button,
+.abc-speak-button,
+.abc-feedback button,
+.abc-result-actions button,
+.abc-result-actions a {
+  padding: 13px 20px;
+  border: 0;
+  border-radius: 15px;
+  background: #7757d0;
+  color: #fff;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+  text-decoration: none;
+}
+.abc-sound-button,
+.abc-speak-button {
+  min-width: 210px;
+  min-height: 58px;
+  font-size: 18px;
+}
+.abc-choices {
+  margin-top: 25px;
+  display: grid;
+  gap: 12px;
+}
+.abc-choices button {
+  min-height: 62px;
+  border: 3px solid #d9d0f5;
+  border-radius: 17px;
+  background: #fff;
+  color: #3c4961;
+  font-size: 21px;
+  font-weight: 900;
+  cursor: pointer;
+}
+.abc-listen-guide {
+  margin: 13px 0 -10px;
+  color: #8064ca;
+  font-size: 14px;
+  font-weight: 900;
+}
+.abc-choices button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+.abc-feedback {
+  margin-top: 22px;
+  padding: 17px;
+  display: grid;
+  gap: 8px;
+  border-radius: 19px;
+  background: #fff2d5;
+}
+.abc-feedback.correct {
+  background: #dcf9e8;
+}
+.abc-feedback strong {
+  font-size: 18px;
+}
+.abc-feedback span {
+  color: #7557c8;
+  font-size: 29px;
+  font-weight: 950;
+}
+.abc-feedback button {
+  width: fit-content;
+  margin: 3px auto 0;
+}
+.abc-browser-note {
+  display: block;
+  margin-top: 15px;
+  color: #b45309;
+  font-weight: 800;
+}
+.abc-result {
+  margin-top: 32px;
+}
+.abc-result > span {
+  font-size: 80px;
+}
+.abc-result h1 {
+  font-size: clamp(29px, 5vw, 48px);
+}
+.abc-catalog-result {
+  margin: 12px 0;
+  padding: 15px;
+  border-radius: 17px;
+  background: #edf7ff;
+  font-weight: 850;
+}
+.abc-result-actions {
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+.abc-result-actions a {
+  background: #fff;
+  color: #6750aa;
+  border: 2px solid #d8cef4;
+}
+.abc-catalog-grid {
+  width: min(1000px, calc(100% - 30px));
+  margin: 20px auto;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 13px;
+}
+.abc-letter-card {
+  min-height: 145px;
+  display: grid;
+  place-content: center;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(60, 73, 105, 0.12);
+  text-align: center;
+}
+.abc-letter-card.locked {
+  filter: grayscale(1);
+  opacity: 0.38;
+}
+.abc-letter-card strong {
+  color: #7655cf;
+  font-size: 48px;
+}
+.abc-letter-card span {
+  font-weight: 900;
+}
+@media (max-width: 760px) {
+  .abc-lessons {
+    grid-template-columns: 1fr;
+  }
+  .abc-lessons a {
+    min-height: 205px;
+  }
+  .abc-answer-form {
+    flex-direction: column;
+  }
+  .abc-answer-form input,
+  .abc-answer-form button {
+    width: 100%;
+  }
+  .abc-catalog-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .abc-picture {
+    min-height: 210px;
+  }
+}
+@media (min-width: 768px) {
+  .abc-question-card.abc-mode-name {
+    width: min(1120px, calc(100% - 32px));
+    display: grid;
+    grid-template-columns: minmax(230px, 0.72fr) minmax(430px, 1.28fr);
+    align-items: stretch;
+    gap: 18px 24px;
+  }
+  .abc-mode-name > .abc-kicker,
+  .abc-mode-name > h1,
+  .abc-mode-name > .abc-feedback {
+    grid-column: 1 / -1;
+  }
+  .abc-mode-name > h1 {
+    margin-bottom: 0;
+  }
+  .abc-mode-name .abc-picture,
+  .abc-mode-name .abc-writing-area {
+    margin: 0;
+    min-height: 300px;
+  }
+  .abc-mode-name .abc-writing-paper {
+    height: 245px;
+  }
+}

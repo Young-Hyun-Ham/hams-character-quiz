@@ -35,6 +35,7 @@ const defaultRules = Object.fromEntries(
 const emptyState = () => ({
   configVersion: gameRewardConfig.version,
   rules: { ...defaultRules },
+  abcCatalogChance: gameRewardConfig.abcCatalog.chance as number,
   entries: [] as Entry[],
   purchases: [] as Purchase[],
 });
@@ -107,6 +108,7 @@ export async function POST(request: Request) {
       if (state.configVersion !== gameRewardConfig.version) {
         state.configVersion = gameRewardConfig.version;
         state.rules = { ...defaultRules };
+        state.abcCatalogChance = gameRewardConfig.abcCatalog.chance;
       }
       state.entries ??= [];
       state.purchases ??= [];
@@ -270,7 +272,11 @@ export async function POST(request: Request) {
         return { state: responseState(), changed: true };
       }
       if (body.action === "replace") {
-        const next = body.state as { rules?: unknown; admin?: unknown } | null;
+        const next = body.state as {
+          rules?: unknown;
+          admin?: unknown;
+          abcCatalogChance?: unknown;
+        } | null;
         if (
           !next ||
           typeof next !== "object" ||
@@ -289,6 +295,13 @@ export async function POST(request: Request) {
         )
           throw new Error("invalid_rules");
         state.rules = rules as Record<RewardKind, number>;
+        if (
+          typeof next.abcCatalogChance !== "number" ||
+          next.abcCatalogChance < 0 ||
+          next.abcCatalogChance > 1
+        )
+          throw new Error("invalid_catalog_chance");
+        state.abcCatalogChance = next.abcCatalogChance;
         admin = next.admin as Admin;
         saveState();
         return { state: responseState() };

@@ -36,6 +36,7 @@ export default function Home() {
   );
   const [selectedWorld, setSelectedWorld] = useState<QuizWorld | null>(null);
   const [gamesOpen, setGamesOpen] = useState(false);
+  const [abcOpen, setAbcOpen] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const layoutMode = selectedLayout ?? detectedLayout;
@@ -92,6 +93,22 @@ export default function Home() {
     };
   }, [selectedWorld, gamesOpen]);
 
+  useEffect(() => {
+    if (!abcOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButtonRef.current?.focus();
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setAbcOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+      triggerRef.current?.focus();
+    };
+  }, [abcOpen]);
+
   return (
     <main className="home-shell">
       <div className="sky-decoration cloud-one" />
@@ -146,7 +163,7 @@ export default function Home() {
       <section className="world-grid" aria-label="캐릭터 세계 선택">
         {quizWorlds.map((world, index) => (
           <button
-            className="world-card"
+            className={`world-card${world.slug === "abc" ? " abc-world-card" : ""}`}
             type="button"
             key={world.slug}
             style={
@@ -158,7 +175,8 @@ export default function Home() {
             }
             onClick={(event) => {
               triggerRef.current = event.currentTarget;
-              setSelectedWorld(world);
+              if (world.slug === "abc") setAbcOpen(true);
+              else setSelectedWorld(world);
             }}
             aria-haspopup="dialog"
           >
@@ -184,15 +202,6 @@ export default function Home() {
             </span>
           </button>
         ))}
-        <button
-          className="coming-card"
-          type="button"
-          aria-label="새로운 친구 준비 중"
-        >
-          <span>＋</span>
-          <strong>새로운 친구</strong>
-          <small>곧 만나요!</small>
-        </button>
       </section>
       <footer className="home-footer">
         <span>♥</span> 매일 10분, 즐거운 한글 습관
@@ -287,6 +296,72 @@ export default function Home() {
                 </div>
                 <b aria-hidden="true">›</b>
               </button>
+            </div>
+          </section>
+        </div>
+      )}
+      {abcOpen && (
+        <div
+          className="activity-backdrop"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setAbcOpen(false);
+          }}
+        >
+          <section
+            className="activity-modal abc-activity-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="abc-activity-title"
+            style={
+              {
+                "--theme": "#7c5ce0",
+                "--soft": "#f2edff",
+              } as React.CSSProperties
+            }
+          >
+            <button
+              ref={closeButtonRef}
+              className="activity-close"
+              type="button"
+              onClick={() => setAbcOpen(false)}
+              aria-label="닫기"
+            >
+              ×
+            </button>
+            <div
+              className="activity-character abc-modal-character"
+              aria-hidden="true"
+            >
+              <span>🦉</span>
+            </div>
+            <span className="activity-kicker">ABC ENGLISH CLASS</span>
+            <h2 id="abc-activity-title">어떤 영어 학습을 해볼까요?</h2>
+            <p>10문제씩 재미있게 영어를 배워요.</p>
+            <div className="activity-options abc-activity-options">
+              <Link className="activity-option" href="/abc/name">
+                <span aria-hidden="true">✏️</span>
+                <div>
+                  <strong>영어 이름찾기</strong>
+                  <small>그림을 보고 펜으로 영어를 써요</small>
+                </div>
+                <b aria-hidden="true">→</b>
+              </Link>
+              <Link className="activity-option" href="/abc/listen">
+                <span aria-hidden="true">🔊</span>
+                <div>
+                  <strong>듣고 문제 맞추기</strong>
+                  <small>소리를 듣고 정답을 골라요</small>
+                </div>
+                <b aria-hidden="true">→</b>
+              </Link>
+              <Link className="activity-option" href="/abc/speak">
+                <span aria-hidden="true">🎙️</span>
+                <div>
+                  <strong>보고 말하기</strong>
+                  <small>그림을 보고 3초 안에 말해요</small>
+                </div>
+                <b aria-hidden="true">→</b>
+              </Link>
             </div>
           </section>
         </div>

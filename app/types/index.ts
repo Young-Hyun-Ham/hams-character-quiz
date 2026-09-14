@@ -1,2 +1,7 @@
 export type CharacterType =
-  "pokemon" | "teenieping" | "wishcat" | "mystery-apt" | "cinnamoroll";
+  | "pokemon"
+  | "teenieping"
+  | "wishcat"
+  | "mystery-apt"
+  | "cinnamoroll"
+  | "abc";

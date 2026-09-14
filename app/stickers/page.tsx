@@ -8,6 +8,8 @@ import {
   readStore,
   refreshStore,
   RULES,
+  abcCatalogChance,
+  saveAbcCatalogChance,
   saveRules,
   unlock,
   type RewardKind,
@@ -22,6 +24,7 @@ export default function StickersPage() {
   const [first, setFirst] = useState("");
   const [rules, setRules] = useState(RULES);
   const [count, setCount] = useState(0);
+  const [abcChance, setAbcChance] = useState(20);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const input = useRef<HTMLInputElement>(null);
@@ -34,6 +37,7 @@ export default function StickersPage() {
         const data = readStore();
         setRules(data.rules);
         setCount(balance(data));
+        setAbcChance(Math.round(abcCatalogChance(data) * 100));
         setMode(
           !data.admin
             ? "setup"
@@ -76,6 +80,7 @@ export default function StickersPage() {
       const data = readStore();
       setRules(data.rules);
       setCount(balance(data));
+      setAbcChance(Math.round(abcCatalogChance(data) * 100));
       setMode("manage");
     } catch (error) {
       setMessage(
@@ -95,6 +100,7 @@ export default function StickersPage() {
     setBusy(true);
     try {
       await saveRules(rules);
+      await saveAbcCatalogChance(abcChance);
       setMessage("스티커 지급 수량을 저장했어요. 다음 획득부터 적용돼요.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "저장하지 못했어요.");
@@ -145,6 +151,26 @@ export default function StickersPage() {
                   <span>개</span>
                 </label>
               ))}
+              <label className="sticker-rule">
+                <span>ABC 영어 알파벳 도감 획득 확률</span>
+                <input
+                  aria-label="ABC 영어 알파벳 도감 획득 확률"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="1"
+                  required
+                  value={Number.isNaN(abcChance) ? "" : abcChance}
+                  onChange={(event) =>
+                    setAbcChance(
+                      event.target.value === ""
+                        ? NaN
+                        : Number(event.target.value),
+                    )
+                  }
+                />
+                <span>%</span>
+              </label>
               <button disabled={busy}>지급 수량 저장</button>
             </form>
             <button
