@@ -7,16 +7,18 @@ export function StickerReward({
   kind,
   total,
   correct,
+  rewardEligible = true,
 }: {
   kind: RewardKind;
   total: number;
   correct: number;
+  rewardEligible?: boolean;
 }) {
   const id = useRef<string | null>(null);
   const [message, setMessage] = useState("스티커를 저장하고 있어요…");
   const [retry, setRetry] = useState(0);
   const [failed, setFailed] = useState(false);
-  const qualifies = eligible(kind, total, correct);
+  const qualifies = rewardEligible && eligible(kind, total, correct);
   useEffect(() => {
     if (!qualifies) return;
     id.current ??= crypto.randomUUID();
@@ -68,7 +70,9 @@ export function StickerReward({
     >
       {qualifies
         ? message
-        : `${LABELS[kind]} 조건을 달성하면 스티커를 받을 수 있어요!`}
+        : rewardEligible
+          ? `${LABELS[kind]} 조건을 달성하면 스티커를 받을 수 있어요!`
+          : "한 번이라도 틀리면 이번 게임에서는 스티커를 받을 수 없어요."}
       {failed && (
         <button type="button" onClick={() => setRetry((value) => value + 1)}>
           저장 다시 시도

@@ -286,6 +286,7 @@ export default function SoundbookGame({
             kind="soundbook"
             total={answers.length}
             correct={answers.filter((answer) => answer.correct).length}
+            rewardEligible={wrongAnswers.length === 0}
           />
           <span className="soundbook-eyebrow">오늘의 목소리 놀이 끝!</span>
           <h1>참 잘했어요! 🎉</h1>

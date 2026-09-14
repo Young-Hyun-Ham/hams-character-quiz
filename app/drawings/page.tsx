@@ -13,6 +13,7 @@ type SavedDrawing = {
   imageName: string | null;
   imagePath: string | null;
   imageUrl?: string | null;
+  hampoCost?: number;
   createdAt: string;
 };
 type SortMode = "date" | "name";
@@ -27,6 +28,8 @@ export default function DrawingsPage() {
   const [page, setPage] = useState(1);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const deleteDialogRef = useRef<HTMLDialogElement>(null);
+  const [deleteTarget, setDeleteTarget] = useState<SavedDrawing | null>(null);
 
   const sortedDrawings = useMemo(
     () =>
@@ -70,13 +73,18 @@ export default function DrawingsPage() {
     requestAnimationFrame(() => dialogRef.current?.showModal());
   }
 
+  function requestDelete(drawing: SavedDrawing) {
+    setDeleteTarget(drawing);
+    requestAnimationFrame(() => deleteDialogRef.current?.showModal());
+  }
+
+  function closeDeleteDialog() {
+    if (deletingId) return;
+    deleteDialogRef.current?.close();
+    setDeleteTarget(null);
+  }
+
   async function deleteDrawing(drawing: SavedDrawing) {
-    if (
-      !window.confirm(
-        `‘${drawing.imageName || drawing.characterName}’ 이미지를 삭제할까요?`,
-      )
-    )
-      return;
     setDeletingId(drawing.id);
     try {
       const response = await fetch("/api/drawings", {
@@ -95,6 +103,8 @@ export default function DrawingsPage() {
         dialogRef.current?.close();
         setSelected(null);
       }
+      deleteDialogRef.current?.close();
+      setDeleteTarget(null);
     } catch {
       setError("이미지를 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.");
     } finally {
@@ -146,6 +156,15 @@ export default function DrawingsPage() {
                   className="saved-drawing-open"
                   onClick={() => openDrawing(drawing)}
                 >
+                  <span
+                    className={`saved-drawing-payment-badge ${
+                      Number(drawing.hampoCost ?? 0) > 0 ? "paid" : "free"
+                    }`}
+                  >
+                    {Number(drawing.hampoCost ?? 0) > 0
+                      ? `유료 · ${drawing.hampoCost}함포`
+                      : "무료"}
+                  </span>
                   <Image
                     src={drawing.imageUrl || drawing.imagePath!}
                     alt={drawing.imageName || drawing.characterName}
@@ -169,7 +188,7 @@ export default function DrawingsPage() {
                   type="button"
                   className="saved-drawing-delete"
                   disabled={deletingId === drawing.id}
-                  onClick={() => void deleteDrawing(drawing)}
+                  onClick={() => requestDelete(drawing)}
                 >
                   {deletingId === drawing.id ? "삭제 중" : "삭제"}
                 </button>
@@ -239,6 +258,61 @@ export default function DrawingsPage() {
               {selected.characterName} · {selected.score}점 · ⭐{" "}
               {selected.stickers}개
             </p>
+          </>
+        )}
+      </dialog>
+      <dialog
+        ref={deleteDialogRef}
+        className={`saved-drawing-delete-dialog ${
+          Number(deleteTarget?.hampoCost ?? 0) > 0 ? "paid" : "free"
+        }`}
+        onCancel={(event) => {
+          if (deletingId) event.preventDefault();
+          else setDeleteTarget(null);
+        }}
+      >
+        {deleteTarget && (
+          <>
+            <span className="saved-drawing-delete-icon" aria-hidden="true">
+              {Number(deleteTarget.hampoCost ?? 0) > 0 ? "⚠️" : "🗑️"}
+            </span>
+            <h2>그림을 삭제할까요?</h2>
+            <p className="saved-drawing-delete-name">
+              ‘{deleteTarget.imageName || deleteTarget.characterName}’
+            </p>
+            {Number(deleteTarget.hampoCost ?? 0) > 0 ? (
+              <div className="saved-drawing-refund-warning" role="alert">
+                <strong>삭제해도 사용한 함포는 환불되지 않습니다.</strong>
+                <span>
+                  이 그림 저장에 사용한 {deleteTarget.hampoCost}함포는 이미지
+                  삭제와 관계없이 다시 지급되지 않습니다.
+                </span>
+              </div>
+            ) : (
+              <p>삭제한 그림은 다시 복구할 수 없습니다.</p>
+            )}
+            <div className="saved-drawing-delete-actions">
+              <button
+                type="button"
+                className="cancel"
+                disabled={deletingId === deleteTarget.id}
+                onClick={closeDeleteDialog}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className="confirm"
+                disabled={deletingId === deleteTarget.id}
+                onClick={() => void deleteDrawing(deleteTarget)}
+              >
+                {deletingId === deleteTarget.id
+                  ? "삭제 중…"
+                  : Number(deleteTarget.hampoCost ?? 0) > 0
+                    ? "환불 없이 삭제"
+                    : "삭제"}
+              </button>
+            </div>
           </>
         )}
       </dialog>

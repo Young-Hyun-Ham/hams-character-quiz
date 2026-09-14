@@ -25,6 +25,8 @@ const genderLabels = {
   other: "기타",
   prefer_not_to_say: "미공개",
 };
+const HAMPO_REFRESH_INTERVAL_MS = 60_000;
+const HAMPO_REFRESHED_AT_KEY = "hams-character-quiz:hampo-refreshed-at";
 function subscribeStickers(callback: () => void) {
   window.addEventListener("storage", callback);
   window.addEventListener("stickers-changed", callback);
@@ -113,25 +115,87 @@ export function SiteAuth({
         if (!response.ok) throw new Error("session_unavailable");
         const payload = (await response.json()) as { user: HeaderUser | null };
         if (!current.signal.aborted)
-          setAuth({ status: "ready", user: payload.user });
+          setAuth((previous) => ({
+            status: "ready",
+            user:
+              payload.user && previous.user?.id === payload.user.id
+                ? {
+                    ...payload.user,
+                    hampoBalance: previous.user.hampoBalance,
+                  }
+                : payload.user,
+          }));
       } catch {
         if (!current.signal.aborted) setAuth({ status: "error", user: null });
       }
     }
-    const onVisible = () => {
-      if (document.visibilityState === "visible") void refresh();
-    };
     void refresh();
-    window.addEventListener("focus", refresh);
-    window.addEventListener("pageshow", refresh);
-    document.addEventListener("visibilitychange", onVisible);
     return () => {
       controller?.abort();
-      window.removeEventListener("focus", refresh);
-      window.removeEventListener("pageshow", refresh);
-      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [pathname, retry]);
+
+  useEffect(() => {
+    if (!auth.user) return;
+    let active = true;
+    let controller: AbortController | null = null;
+    async function refreshHampo(force = false, suppliedBalance?: number) {
+      const now = Date.now();
+      const refreshKey = `${HAMPO_REFRESHED_AT_KEY}:${auth.user!.id}`;
+      const lastRefresh = Number(sessionStorage.getItem(refreshKey) ?? 0);
+      if (!force && now - lastRefresh < HAMPO_REFRESH_INTERVAL_MS) return;
+      if (typeof suppliedBalance === "number") {
+        setAuth((current) =>
+          current.user
+            ? { ...current, user: { ...current.user, hampoBalance: suppliedBalance } }
+            : current,
+        );
+        sessionStorage.setItem(refreshKey, String(now));
+        return;
+      }
+      controller?.abort();
+      controller = new AbortController();
+      try {
+        const response = await fetch("/api/auth/hampo", {
+          cache: "no-store",
+          credentials: "same-origin",
+          signal: controller.signal,
+        });
+        if (!response.ok) return;
+        const payload = (await response.json()) as { hampoBalance?: number };
+        if (!active || typeof payload.hampoBalance !== "number") return;
+        setAuth((current) =>
+          current.user
+            ? { ...current, user: { ...current.user, hampoBalance: payload.hampoBalance! } }
+            : current,
+        );
+        sessionStorage.setItem(refreshKey, String(Date.now()));
+      } catch {
+        /* Keep the last known balance when the SSO server is unavailable. */
+      }
+    }
+    const onFocus = () => void refreshHampo(true);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void refreshHampo(true);
+    };
+    const onBalanceChanged = (event: Event) => {
+      const balance = (event as CustomEvent<{ balance?: number }>).detail?.balance;
+      void refreshHampo(true, balance);
+    };
+    void refreshHampo(false);
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("pageshow", onFocus);
+    window.addEventListener("hampo-balance-changed", onBalanceChanged);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      active = false;
+      controller?.abort();
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("pageshow", onFocus);
+      window.removeEventListener("hampo-balance-changed", onBalanceChanged);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [auth.user?.id, pathname]);
 
   function navigate(
     endpoint: "sso/login" | "auth/logout" | "auth/profile",

@@ -50,6 +50,7 @@ export default function SecretMapGame({
     "지도 아래의 도형 조각을 같은 모양의 점선 빈칸에 끼워 줘!",
   );
   const [loginPromptOpen, setLoginPromptOpen] = useState(false);
+  const [hadWrongAnswer, setHadWrongAnswer] = useState(false);
   const dropShape = useEffectEvent((shape: Shape, slot: Shape) => {
     void placeShape(shape, slot);
   });
@@ -87,6 +88,7 @@ export default function SecretMapGame({
 
   async function placeShape(shape: Shape, slot: Shape) {
     if (shape !== slot) {
+      setHadWrongAnswer(true);
       setMessage(
         `${shapeNames[shape]} 조각은 ${shapeNames[slot]} 빈칸에 맞지 않아. 모양을 다시 살펴봐!`,
       );
@@ -104,7 +106,7 @@ export default function SecretMapGame({
     }
     setMessage("부서진 지도가 모두 이어졌어! 숨은 귀신의 장소를 찾았어!");
     const roll = crypto.getRandomValues(new Uint32Array(1))[0] / 0x100000000;
-    if (roll >= gameRewardConfig.secretMapCapture.chance) {
+    if (hadWrongAnswer || roll >= gameRewardConfig.secretMapCapture.chance) {
       setResult("miss");
       return;
     }
@@ -211,7 +213,7 @@ export default function SecretMapGame({
             </p>
           </>
         ) : (
-          <MapResult success={result === "success"} ghost={ghost} />
+          <MapResult success={result === "success"} ghost={ghost} rewardEligible={!hadWrongAnswer} />
         )}
         <p className="secret-map-message" role="status">
           {message}
@@ -234,13 +236,14 @@ export default function SecretMapGame({
   );
 }
 
-function MapResult({ success, ghost }: { success: boolean; ghost: Character }) {
+function MapResult({ success, ghost, rewardEligible }: { success: boolean; ghost: Character; rewardEligible: boolean }) {
   return (
     <section className={`map-result ${success ? "success" : "miss"}`}>
       <StickerReward
         kind="secretMap"
         total={mapShapes.length}
         correct={mapShapes.length}
+        rewardEligible={rewardEligible}
       />
       <div className="map-magic" aria-hidden="true">
         △　◇　○　⬡　★　⬟

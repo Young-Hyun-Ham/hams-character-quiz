@@ -1,5 +1,9 @@
 import { createHash, randomUUID } from "node:crypto";
-import { getSsoClientId, getSsoUserFromRequest } from "@hams-fam/sso-client";
+import {
+  getSsoAccessTokenFromRequest,
+  getSsoServerUrl,
+  getSsoUserFromRequest,
+} from "@hams-fam/sso-client";
 import { FieldValue } from "firebase-admin/firestore";
 import {
   getAdminFirestore,
@@ -9,8 +13,57 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+async function consumeDrawingHampo(request: Request, drawingId: string) {
+  const accessToken = getSsoAccessTokenFromRequest(request);
+  if (!accessToken)
+    return { ok: false as const, error: "sso_reauthentication_required" };
+
+  const response = await fetch(
+    new URL("/api/sso/hampo/consume", getSsoServerUrl()),
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        amount: 1,
+        source: "drawing_image",
+        referenceId: drawingId,
+        description: "캐릭터 퀴즈 그림 이미지 추가 저장",
+      }),
+      cache: "no-store",
+    },
+  );
+  const payload = (await response.json()) as {
+    ok?: boolean;
+    error?: string;
+    balance?: number;
+    transactionId?: string;
+  };
+  return response.ok && payload.ok
+    ? {
+        ok: true as const,
+        balance: Number(payload.balance ?? 0),
+        transactionId: String(payload.transactionId ?? ""),
+      }
+    : {
+        ok: false as const,
+        error: payload.error ?? "hampo_consume_failed",
+        status: response.status,
+      };
+}
+
 type Admin = { hash?: string; failures?: number } | null;
 type StickerEntry = { id: string; kind: string; amount: number; at: string };
+
+async function getFreeSavedDrawingCount(
+  collection: FirebaseFirestore.CollectionReference,
+) {
+  const snapshot = await collection.where("imagePath", "!=", null).get();
+  return snapshot.docs.filter((item) => Number(item.data().hampoCost ?? 0) < 1)
+    .length;
+}
 
 function userId(request: Request) {
   return getSsoUserFromRequest(request)?.id ?? null;
@@ -37,13 +90,14 @@ export async function GET(request: Request) {
     .collection("hamsCharacterQuizUsers")
     .doc(user.id)
     .collection("drawings");
-  const [snapshot, countSnapshot] = await Promise.all([
+  const [snapshot, freeSavedCount] = await Promise.all([
     collection.orderBy("createdAt", "desc").limit(100).get(),
-    collection.where("imagePath", "!=", null).count().get(),
+    getFreeSavedDrawingCount(collection),
   ]);
   return Response.json({
     drawings: snapshot.docs.map((item) => ({ id: item.id, ...item.data() })),
-    savedCount: countSnapshot.data().count,
+    savedCount: freeSavedCount,
+    freeSavedCount,
     hampoBalance: user.hampoBalance,
   });
 }
@@ -168,22 +222,13 @@ export async function POST(request: Request) {
       .doc(drawingId);
     if (!(await drawingReference.get()).exists)
       return Response.json({ error: "drawing_not_found" }, { status: 404 });
-    const savedCount = (
-      await userReference
-        .collection("drawings")
-        .where("imagePath", "!=", null)
-        .count()
-        .get()
-    ).data().count;
-    const chargeRequired = savedCount >= 10;
+    const freeSavedCount = await getFreeSavedDrawingCount(
+      userReference.collection("drawings"),
+    );
+    const chargeRequired = freeSavedCount >= 10;
     if (chargeRequired && body.confirmHampoCharge !== true)
       return Response.json(
         { error: "hampo_required", hampoBalance: sessionUser.hampoBalance },
-        { status: 402 },
-      );
-    if (chargeRequired && sessionUser.hampoBalance < 1)
-      return Response.json(
-        { error: "insufficient_hampo", hampoBalance: 0 },
         { status: 402 },
       );
     const fileName = `${randomUUID()}-${safeName}.png`;
@@ -210,6 +255,38 @@ export async function POST(request: Request) {
     });
     const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(storagePath)}?alt=media&token=${downloadToken}`;
     const savedAt = new Date().toISOString();
+    let hampoBalance = sessionUser.hampoBalance;
+    let hampoTransactionId: string | null = null;
+    if (chargeRequired) {
+      let consumption: Awaited<ReturnType<typeof consumeDrawingHampo>>;
+      try {
+        consumption = await consumeDrawingHampo(request, drawingId);
+      } catch (error) {
+        console.error("Failed to contact SSO hampo API", error);
+        await bucket.file(storagePath).delete({ ignoreNotFound: true });
+        return Response.json(
+          { error: "hampo_service_unavailable" },
+          { status: 502 },
+        );
+      }
+      if (!consumption.ok) {
+        await bucket.file(storagePath).delete({ ignoreNotFound: true });
+        if (consumption.error === "insufficient_hampo") {
+          return Response.json(
+            { error: "insufficient_hampo", hampoBalance: 0 },
+            { status: 402 },
+          );
+        }
+        console.error("SSO hampo consumption rejected", consumption);
+        const rejectionStatus = consumption.status ?? 401;
+        return Response.json(
+          { error: consumption.error },
+          { status: rejectionStatus >= 400 ? rejectionStatus : 502 },
+        );
+      }
+      hampoBalance = consumption.balance;
+      hampoTransactionId = consumption.transactionId;
+    }
     try {
       await firestore.runTransaction(async (transaction) => {
         const currentDrawingSnapshot = await transaction.get(drawingReference);
@@ -218,57 +295,13 @@ export async function POST(request: Request) {
           currentDrawingSnapshot.data()?.imagePath
         )
           throw new Error("drawing_already_saved");
-        if (chargeRequired) {
-          const hampoUserReference = firestore.collection("users").doc(id);
-          const hampoUserSnapshot = await transaction.get(hampoUserReference);
-          const currentBalance = Number(
-            hampoUserSnapshot.data()?.hampoBalance ?? 0,
-          );
-          if (
-            !hampoUserSnapshot.exists ||
-            !Number.isSafeInteger(currentBalance) ||
-            currentBalance < 1
-          )
-            throw new Error("insufficient_hampo");
-          const balanceAfter = currentBalance - 1;
-          const historyReference = firestore
-            .collection("hampo_usage_histories")
-            .doc(randomUUID());
-          const clientId = getSsoClientId();
-          const membership = sessionUser.serviceMemberships.find(
-            (item) => item.clientId === clientId,
-          );
-          transaction.update(hampoUserReference, {
-            hampoBalance: balanceAfter,
-            updatedAt: savedAt,
-          });
-          transaction.set(historyReference, {
-            id: historyReference.id,
-            originalTransactionId: historyReference.id,
-            userId: id,
-            email: String(hampoUserSnapshot.data()?.email ?? ""),
-            serviceSiteId: membership?.serviceSiteId ?? "hams-character-quiz",
-            clientId,
-            serviceName: membership?.serviceName ?? "한글 몬스터",
-            amount: 1,
-            refundableAmount: 0,
-            previousBalance: currentBalance,
-            balanceAfter,
-            unitPrice: 100,
-            paymentAmount: 100,
-            source: "drawing_image",
-            status: "completed",
-            refundStatus: "none",
-            createdAt: savedAt,
-            updatedAt: savedAt,
-          });
-        }
         transaction.update(drawingReference, {
           imageName: safeName,
           imagePath: storagePath,
           imageUrl,
           savedAt,
           hampoCost: chargeRequired ? 1 : 0,
+          hampoTransactionId,
         });
       });
     } catch (error) {
@@ -285,6 +318,7 @@ export async function POST(request: Request) {
       imagePath: storagePath,
       imageUrl,
       hampoCharged: chargeRequired ? 1 : 0,
+      hampoBalance,
     });
   }
 

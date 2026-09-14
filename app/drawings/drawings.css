@@ -85,6 +85,25 @@
   object-fit: contain;
   background: #fff;
 }
+.saved-drawings-grid .saved-drawing-payment-badge {
+  position: absolute;
+  z-index: 2;
+  top: 20px;
+  left: 20px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 3px 10px #1e293b33;
+}
+.saved-drawings-grid .saved-drawing-payment-badge.free {
+  background: #16a34a;
+}
+.saved-drawings-grid .saved-drawing-payment-badge.paid {
+  background: #7c3aed;
+}
 .saved-drawings-grid strong {
   padding-inline: 4px;
   font-size: 16px;
@@ -126,6 +145,84 @@
 .saved-drawing-delete:disabled {
   opacity: 0.55;
   cursor: wait;
+}
+.saved-drawing-delete-dialog {
+  position: fixed;
+  inset: 0;
+  width: min(92vw, 460px);
+  max-height: min(88vh, 680px);
+  margin: auto;
+  border: 0;
+  border-radius: 24px;
+  padding: 28px;
+  overflow-y: auto;
+  color: #263044;
+  text-align: center;
+  box-shadow: 0 24px 80px #17203355;
+}
+.saved-drawing-delete-dialog::backdrop {
+  background: #172033aa;
+  backdrop-filter: blur(3px);
+}
+.saved-drawing-delete-dialog h2 {
+  margin: 10px 0 6px;
+  font-size: 24px;
+}
+.saved-drawing-delete-icon {
+  display: block;
+  font-size: 38px;
+}
+.saved-drawing-delete-name {
+  margin: 0 0 18px;
+  color: #64748b;
+  font-weight: 800;
+}
+.saved-drawing-refund-warning {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0;
+  padding: 18px;
+  border: 2px solid #ef4444;
+  border-radius: 16px;
+  background: #fff1f2;
+  color: #991b1b;
+  text-align: left;
+}
+.saved-drawing-refund-warning strong {
+  padding: 0;
+  color: #b91c1c;
+  font-size: 17px;
+}
+.saved-drawing-refund-warning span {
+  padding: 0;
+  color: #991b1b;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.saved-drawing-delete-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 22px;
+}
+.saved-drawing-delete-actions button {
+  border: 0;
+  border-radius: 13px;
+  padding: 13px 16px;
+  font-weight: 900;
+  cursor: pointer;
+}
+.saved-drawing-delete-actions .cancel {
+  background: #eef2f7;
+  color: #475569;
+}
+.saved-drawing-delete-actions .confirm {
+  background: #dc2626;
+  color: #fff;
+}
+.saved-drawing-delete-actions button:disabled {
+  cursor: wait;
+  opacity: 0.55;
 }
 .saved-drawings-pagination {
   margin-top: 28px;

@@ -36,6 +36,7 @@ export default function DessertTimeGame({
     "시침과 분침을 손으로 움직여 약속 시간을 맞춰 줘!",
   );
   const [loginPromptOpen, setLoginPromptOpen] = useState(false);
+  const [hadWrongAnswer, setHadWrongAnswer] = useState(false);
   const hostName = world.slug === "teenieping" ? "하츄핑" : host.name;
   const timeText =
     targetMinute === 0
@@ -66,13 +67,14 @@ export default function DessertTimeGame({
 
   async function checkTime() {
     if (hour !== targetHour || minute !== targetMinute) {
+      setHadWrongAnswer(true);
       setMessage(
         `아직 ${timeText}가 아니야. 짧은 시침과 긴 분침을 다시 움직여 봐!`,
       );
       return;
     }
     const roll = crypto.getRandomValues(new Uint32Array(1))[0] / 0x100000000;
-    if (roll >= gameRewardConfig.dessertTimeCapture.chance) {
+    if (hadWrongAnswer || roll >= gameRewardConfig.dessertTimeCapture.chance) {
       setMessage(
         "약속 시간에 도착했어! 도감 선물은 다음 시간에 다시 도전해 봐.",
       );
@@ -167,6 +169,7 @@ export default function DessertTimeGame({
             world={world}
             host={host}
             timeText={timeText}
+            rewardEligible={!hadWrongAnswer}
           />
         )}
         <p className="time-message" role="status">
@@ -262,15 +265,17 @@ function TimeResult({
   world,
   host,
   timeText,
+  rewardEligible,
 }: {
   success: boolean;
   world: QuizWorld;
   host: Character;
   timeText: string;
+  rewardEligible: boolean;
 }) {
   return (
     <section className={`time-result ${success ? "success" : "miss"}`}>
-      <StickerReward kind="dessertTime" total={1} correct={1} />
+      <StickerReward kind="dessertTime" total={1} correct={1} rewardEligible={rewardEligible} />
       <div className="time-sparkles" aria-hidden="true">
         ♥ ✦ 🧁 ★ ♥
       </div>

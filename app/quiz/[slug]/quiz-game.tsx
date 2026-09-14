@@ -138,6 +138,7 @@ export default function QuizGame({
   const [showAnswer, setShowAnswer] = useState(false);
   const [strokes, setStrokes] = useState(0);
   const [answers, setAnswers] = useState<Answer[]>([]);
+  const [pendingCatalogImages, setPendingCatalogImages] = useState<string[]>([]);
   const [loginPromptOpen, setLoginPromptOpen] = useState(false);
   const [finished, setFinished] = useState(false);
   const [similarityScore, setSimilarityScore] = useState(0);
@@ -262,21 +263,24 @@ export default function QuizGame({
     });
   };
   const grade = async (correct: boolean) => {
+    let nextCatalogImages = pendingCatalogImages;
     if (correct) {
       const roll = crypto.getRandomValues(new Uint32Array(1))[0] / 0x100000000;
       if (roll < gameRewardConfig.quizCapture.chance) {
-        if (await isAuthenticated()) {
-          try {
-            await collectCard(world.slug, current.image);
-          } catch {
-            /* Keep playing if storage is unavailable. */
-          }
-        } else setLoginPromptOpen(true);
+        nextCatalogImages = [...pendingCatalogImages, current.image];
+        setPendingCatalogImages(nextCatalogImages);
       }
     }
     const nextAnswers = [...answers, { character: current, correct }];
     setAnswers(nextAnswers);
     if (index === questions.length - 1) {
+      if (nextAnswers.every((answer) => answer.correct) && nextCatalogImages.length) {
+        if (await isAuthenticated()) {
+          await Promise.allSettled(
+            nextCatalogImages.map((image) => collectCard(world.slug, image)),
+          );
+        } else setLoginPromptOpen(true);
+      }
       setFinished(true);
       return;
     }
@@ -294,6 +298,7 @@ export default function QuizGame({
     activeStrokeRef.current = [];
     setQuestions(wrong);
     setAnswers([]);
+    setPendingCatalogImages([]);
     setIndex(0);
     setShowAnswer(false);
     setFinished(false);
@@ -307,6 +312,7 @@ export default function QuizGame({
     activeStrokeRef.current = [];
     setQuestions(pickRandomQuestions(world.characters));
     setAnswers([]);
+    setPendingCatalogImages([]);
     setIndex(0);
     setShowAnswer(false);
     setFinished(false);
@@ -455,6 +461,7 @@ export default function QuizGame({
             kind="quiz"
             total={answers.length}
             correct={correctCount}
+            rewardEligible={wrongCount === 0}
           />
           <div className="result-confetti">✦　★　✧</div>
           <span className="result-badge">학습 완료!</span>

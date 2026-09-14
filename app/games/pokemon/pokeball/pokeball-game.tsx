@@ -84,6 +84,7 @@ export default function PokeballGame({
   const [stage, setStage] = useState<1 | 2 | 3 | 4>(1);
   const [problem, setProblem] = useState(initialProblem);
   const [wrongAttempts, setWrongAttempts] = useState(0);
+  const [hadWrongAnswer, setHadWrongAnswer] = useState(false);
   const [loginPromptOpen, setLoginPromptOpen] = useState(false);
   const [thrown, setThrown] = useState(0);
   const [drag, setDrag] = useState<Point | null>(null);
@@ -138,6 +139,7 @@ export default function PokeballGame({
 
   async function choose(amount: number) {
     if (amount !== problem.answer) {
+      setHadWrongAnswer(true);
       if (wrongAttempts + 1 >= 2) {
         let nextProblem = createArithmeticProblem();
         while (
@@ -161,7 +163,8 @@ export default function PokeballGame({
       1,
       target * gameRewardConfig.pokemonCapture.chance,
     );
-    const captured = random[0] / 0x100000000 < captureChance;
+    const captured =
+      !hadWrongAnswer && random[0] / 0x100000000 < captureChance;
     if (!captured) {
       setMessage(`${character.name}이 몬스터볼에서 빠져나와 도망갔어요!`);
       setStage(4);
@@ -339,7 +342,7 @@ export default function PokeballGame({
         )}
         {stage === 3 && (
           <section className="capture-success">
-            <StickerReward kind="pokeball" total={1} correct={1} />
+            <StickerReward kind="pokeball" total={1} correct={1} rewardEligible={!hadWrongAnswer} />
             <div className="capture-rays" aria-hidden="true">
               ✦
             </div>
@@ -370,7 +373,7 @@ export default function PokeballGame({
         )}
         {stage === 4 && (
           <section className="capture-failed">
-            <StickerReward kind="pokeball" total={1} correct={1} />
+            <StickerReward kind="pokeball" total={1} correct={1} rewardEligible={!hadWrongAnswer} />
             <div className="escape-cloud" aria-hidden="true">
               💨
             </div>

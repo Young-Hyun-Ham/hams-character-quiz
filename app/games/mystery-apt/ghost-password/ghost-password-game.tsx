@@ -52,6 +52,7 @@ export default function GhostPasswordGame({
     "부적의 숫자를 계산해 결계 비밀번호를 찾아줘!",
   );
   const [loginPromptOpen, setLoginPromptOpen] = useState(false);
+  const [hadWrongAnswer, setHadWrongAnswer] = useState(false);
   const choices = useMemo(
     () => createChoices(initialProblem),
     [initialProblem],
@@ -63,6 +64,7 @@ export default function GhostPasswordGame({
 
   function choosePassword(value: number) {
     if (value !== initialProblem.answer) {
+      setHadWrongAnswer(true);
       setMessage("결계가 흔들렸어! 부적의 숫자를 다시 천천히 계산해 봐.");
       return;
     }
@@ -72,6 +74,7 @@ export default function GhostPasswordGame({
 
   async function chooseGreater(value: number) {
     if (value !== comparison.answer) {
+      setHadWrongAnswer(true);
       setMessage("이쪽 기운은 더 약해. 더 큰 숫자가 적힌 부적을 눌러줘!");
       return;
     }
@@ -80,7 +83,7 @@ export default function GhostPasswordGame({
       roll <
       initialProblem.answer *
         gameRewardConfig.mysteryAptCapture.chancePerPasswordNumber;
-    if (!captured) {
+    if (hadWrongAnswer || !captured) {
       setMessage("결계는 풀었지만 귀신이 고스트볼을 피해 달아났어!");
       setStage(4);
       return;
@@ -182,13 +185,14 @@ export default function GhostPasswordGame({
           </>
         )}
         {stage === 3 && (
-          <Result success ghost={ghost} chance={initialProblem.answer} />
+          <Result success ghost={ghost} chance={initialProblem.answer} rewardEligible={!hadWrongAnswer} />
         )}
         {stage === 4 && (
           <Result
             success={false}
             ghost={ghost}
             chance={initialProblem.answer}
+            rewardEligible={!hadWrongAnswer}
           />
         )}
         <p className="ghost-message" role="status">
@@ -220,14 +224,16 @@ function Result({
   success,
   ghost,
   chance,
+  rewardEligible,
 }: {
   success: boolean;
   ghost: Character;
   chance: number;
+  rewardEligible: boolean;
 }) {
   return (
     <section className={`ghost-result ${success ? "success" : "failed"}`}>
-      <StickerReward kind="ghostChip" total={2} correct={2} />
+      <StickerReward kind="ghostChip" total={2} correct={2} rewardEligible={rewardEligible} />
       <div className="ghost-ball" aria-hidden="true">
         ✦
       </div>

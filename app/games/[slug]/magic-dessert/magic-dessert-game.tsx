@@ -49,6 +49,7 @@ export default function MagicDessertGame({
     "오른쪽 접시에 디저트를 놓아 모두 10개로 만들어 줘!",
   );
   const [loginPromptOpen, setLoginPromptOpen] = useState(false);
+  const [hadWrongAnswer, setHadWrongAnswer] = useState(false);
   const patternChoices = useMemo(
     () => choicesFor(pattern.answer, leftCount),
     [leftCount, pattern.answer],
@@ -66,6 +67,7 @@ export default function MagicDessertGame({
 
   function checkTen() {
     if (rightCount !== answer) {
+      setHadWrongAnswer(true);
       setMessage(
         rightCount + leftCount < 10
           ? "조금 더 필요해! 두 접시의 디저트를 세어 봐."
@@ -81,11 +83,13 @@ export default function MagicDessertGame({
 
   async function choosePattern(value: number) {
     if (value !== pattern.answer) {
+      setHadWrongAnswer(true);
       setMessage("패턴을 다시 살펴봐. 숫자가 얼마씩 커지고 있을까?");
       return;
     }
     const roll = crypto.getRandomValues(new Uint32Array(1))[0] / 0x100000000;
     if (
+      hadWrongAnswer ||
       roll >=
       answer * gameRewardConfig.magicDessertCapture.chancePerDessert
     ) {
@@ -215,9 +219,11 @@ export default function MagicDessertGame({
             </p>
           </>
         )}
-        {stage === 3 && <DessertResult success world={world} host={host} />}
+        {stage === 3 && (
+          <DessertResult success world={world} host={host} rewardEligible={!hadWrongAnswer} />
+        )}
         {stage === 4 && (
-          <DessertResult success={false} world={world} host={host} />
+          <DessertResult success={false} world={world} host={host} rewardEligible={!hadWrongAnswer} />
         )}
         <p className="dessert-message" role="status">
           {message}
@@ -249,14 +255,16 @@ function DessertResult({
   success,
   world,
   host,
+  rewardEligible,
 }: {
   success: boolean;
   world: QuizWorld;
   host: Character;
+  rewardEligible: boolean;
 }) {
   return (
     <section className={`dessert-result ${success ? "success" : "failed"}`}>
-      <StickerReward kind="magicDessert" total={2} correct={2} />
+      <StickerReward kind="magicDessert" total={2} correct={2} rewardEligible={rewardEligible} />
       <div className="magic-effects" aria-hidden="true">
         ♥ ✦ ★ ♥ ✧
       </div>

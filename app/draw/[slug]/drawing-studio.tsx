@@ -511,9 +511,30 @@ export default function DrawingStudio({
         savedCount: number;
         hampoBalance: number;
       };
-      setHampoBalance(payload.hampoBalance);
-      if (payload.savedCount >= 10) hampoConfirmDialogRef.current?.showModal();
-      else await saveReviewedImage(false);
+      if (payload.savedCount >= 10) {
+        const balanceResponse = await fetch("/api/auth/hampo", {
+          cache: "no-store",
+          credentials: "same-origin",
+        });
+        if (!balanceResponse.ok) throw Error("hampo_balance_check_failed");
+        const balancePayload = (await balanceResponse.json()) as {
+          hampoBalance?: number;
+        };
+        const liveBalance = Number(balancePayload.hampoBalance);
+        if (!Number.isSafeInteger(liveBalance) || liveBalance < 0) {
+          throw Error("invalid_hampo_balance");
+        }
+        setHampoBalance(liveBalance);
+        window.dispatchEvent(
+          new CustomEvent("hampo-balance-changed", {
+            detail: { balance: liveBalance },
+          }),
+        );
+        hampoConfirmDialogRef.current?.showModal();
+      } else {
+        setHampoBalance(payload.hampoBalance);
+        await saveReviewedImage(false);
+      }
     } catch {
       successDialogRef.current?.close();
       setResultMessage(
@@ -556,6 +577,14 @@ export default function DrawingStudio({
       }
       if (!response.ok) throw Error("image_save_failed");
       hampoConfirmDialogRef.current?.close();
+      if (typeof payload.hampoBalance === "number") {
+        setHampoBalance(payload.hampoBalance);
+        window.dispatchEvent(
+          new CustomEvent("hampo-balance-changed", {
+            detail: { balance: payload.hampoBalance },
+          }),
+        );
+      }
       setImageSaved(true);
       setResultMessage(
         payload.hampoCharged

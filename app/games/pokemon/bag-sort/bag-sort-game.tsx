@@ -43,6 +43,7 @@ export default function BagSortGame({
     "흩어진 포켓몬을 이름이 같은 바구니에 넣어 주세요!",
   );
   const [loginPromptOpen, setLoginPromptOpen] = useState(false);
+  const [hadWrongAnswer, setHadWrongAnswer] = useState(false);
   const question = species[questionIndex];
   const choices = useMemo(() => {
     const values = [2, 3, 4];
@@ -90,6 +91,7 @@ export default function BagSortGame({
     const item = items.find((candidate) => candidate.id === itemId);
     if (!item || sorted[itemId]) return;
     if (item.name !== basketName) {
+      setHadWrongAnswer(true);
       setMessage(
         `${item.name}은 ${basketName} 바구니가 아니에요. 다시 살펴봐요!`,
       );
@@ -114,26 +116,28 @@ export default function BagSortGame({
   }
 
   async function chooseCount(value: number) {
-    if (value !== question.count)
+    if (value !== question.count) {
+      setHadWrongAnswer(true);
       return setMessage(`${question.name}을 한 마리씩 다시 세어 봐요!`);
+    }
     const wonCard =
       crypto.getRandomValues(new Uint32Array(1))[0] / 0x100000000 <
       gameRewardConfig.pokemonBagCapture.chance;
-    if (wonCard && !(await isAuthenticated())) {
+    if (!hadWrongAnswer && wonCard && !(await isAuthenticated())) {
       setMessage("로그인해야 정리한 포켓몬을 도감에 저장할 수 있어요.");
       setLoginPromptOpen(true);
       return;
     }
-    if (wonCard) {
+    if (!hadWrongAnswer && wonCard) {
       try {
         await collectCard("pokemon", question.image);
       } catch {
         /* 게임 완료는 유지합니다. */
       }
     }
-    setCaptured(wonCard);
+    setCaptured(!hadWrongAnswer && wonCard);
     setMessage(
-      wonCard
+      !hadWrongAnswer && wonCard
         ? "정답! 가방 정리와 도감 등록까지 성공!"
         : "정답! 가방 정리를 멋지게 끝냈어요.",
     );
@@ -174,7 +178,7 @@ export default function BagSortGame({
             onChoose={chooseCount}
           />
         )}
-        {stage === 3 && <BagResult captured={captured} pokemon={question} />}
+        {stage === 3 && <BagResult captured={captured} pokemon={question} rewardEligible={!hadWrongAnswer} />}
         <p className="bag-message" role="status">
           {message}
         </p>
@@ -347,13 +351,15 @@ function CountStage({
 function BagResult({
   captured,
   pokemon,
+  rewardEligible,
 }: {
   captured: boolean;
   pokemon: BagSpecies;
+  rewardEligible: boolean;
 }) {
   return (
     <section className="bag-result">
-      <StickerReward kind="pokemonBag" total={1} correct={1} />
+      <StickerReward kind="pokemonBag" total={1} correct={1} rewardEligible={rewardEligible} />
       <div className="lab-sparkles" aria-hidden="true">
         ✦ 🎒 ✦
       </div>
