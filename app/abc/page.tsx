@@ -30,7 +30,7 @@ export default function AbcPage() {
       <section className="abc-hero">
         <span>HELLO, LITTLE LEARNER!</span>
         <h1>🌈 ABC 영어교실</h1>
-        <p>쉬운 그림 낱말 500개로 재미있게 영어를 배워요.</p>
+        <p>쉬운 단수 그림 낱말 100개로 재미있게 영어를 배워요.</p>
       </section>
       <section className="abc-lessons" aria-label="영어 학습 선택">
         {lessons.map((lesson) => (

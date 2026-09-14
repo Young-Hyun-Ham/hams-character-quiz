@@ -8,7 +8,8 @@ export const RULES = Object.fromEntries(
   ]),
 ) as Record<RewardKind, number>;
 export const LABELS: Record<RewardKind, string> = {
-  abc: "ABC 영어교실 · 10문제 중 9개 이상",
+  abc: "ABC 영어교실 · 10문제 모두 정답",
+  abcNine: "ABC 영어교실 · 정확히 9문제 정답",
   quiz: "이름찾기 · 10문제 중 9개 이상",
   soundbook: "사운드북 · 10문제 중 7개 이상",
   memory1: "같은 그림 찾기 · 1단계 완료",

@@ -30,7 +30,7 @@ const TITLES: Record<Mode, string> = {
   listen: "듣고 문제 맞추기",
   speak: "보고 말하기",
 };
-const HANDWRITING_PASSING_SCORE = 95;
+const HANDWRITING_PASSING_SCORE = 90;
 const OUTSIDE_GUIDE_PENALTY = 100;
 const INSIDE_GUIDE_PENALTY = 50;
 
@@ -431,7 +431,11 @@ export function AbcGame({ mode }: { mode: Mode }) {
               ? "정말 훌륭해요! 보상을 확인해 볼까요?"
               : "조금만 더 연습하면 보상을 받을 수 있어요."}
           </p>
-          <StickerReward kind="abc" total={10} correct={correct} />
+          <StickerReward
+            kind={correct === 10 ? "abc" : "abcNine"}
+            total={10}
+            correct={correct}
+          />
           <div className="abc-catalog-result">
             {correct >= 9
               ? catalogMessage

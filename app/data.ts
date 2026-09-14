@@ -97,7 +97,11 @@ const wishcatCharacters: Character[] = [
   { name: "라떼냥", image: "/wishcat/catalog/lattenyang.png", hint: "라" },
   { name: "이쁘냥", image: "/wishcat/catalog/ippeunyang.png", hint: "이" },
   { name: "러브냥", image: "/wishcat/catalog/loveyang.png", hint: "러" },
-  { name: "쨍쨍냥", image: "/wishcat/catalog/jjaengjjaengnyang.png", hint: "쨍", },
+  {
+    name: "쨍쨍냥",
+    image: "/wishcat/catalog/jjaengjjaengnyang.png",
+    hint: "쨍",
+  },
   { name: "똑똑냥", image: "/wishcat/catalog/ttokttoknyang.png", hint: "똑" },
   { name: "헬씨냥", image: "/wishcat/catalog/healthynyang.png", hint: "헬" },
   { name: "닥터냥", image: "/wishcat/catalog/doctornyang.png", hint: "닥" },
@@ -269,13 +273,29 @@ const teeniepingCharacters: Character[] = [
 ];
 
 const cinnamorollCharacters: Character[] = [
-  { name: "시나모롤", image: "/cinnamoroll/catalog/cinnamoroll.png", hint: "시", },
-  { name: "카푸치노", image: "/cinnamoroll/catalog/cappuccino.png", hint: "카", },
+  {
+    name: "시나모롤",
+    image: "/cinnamoroll/catalog/cinnamoroll.png",
+    hint: "시",
+  },
+  {
+    name: "카푸치노",
+    image: "/cinnamoroll/catalog/cappuccino.png",
+    hint: "카",
+  },
   { name: "모카", image: "/cinnamoroll/catalog/mocha.png", hint: "모" },
   { name: "쉬폰", image: "/cinnamoroll/catalog/chiffon.png", hint: "쉬" },
-  { name: "에스프레소", image: "/cinnamoroll/catalog/espresso.png", hint: "에", },
+  {
+    name: "에스프레소",
+    image: "/cinnamoroll/catalog/espresso.png",
+    hint: "에",
+  },
   { name: "밀크", image: "/cinnamoroll/catalog/milk.png", hint: "밀" },
-  { name: "작은새들", image: "/cinnamoroll/catalog/little-birds.png", hint: "작", },
+  {
+    name: "작은새들",
+    image: "/cinnamoroll/catalog/little-birds.png",
+    hint: "작",
+  },
   { name: "코코", image: "/cinnamoroll/catalog/coco.png", hint: "코" },
   { name: "넛츠", image: "/cinnamoroll/catalog/nuts.png", hint: "넛" },
   { name: "포롱", image: "/cinnamoroll/catalog/poron.png", hint: "포" },
@@ -351,7 +371,7 @@ const quizWorldData: QuizWorld[] = [
     slug: "abc",
     title: "ABC 영어교실",
     english: "ABC ENGLISH CLASS",
-    description: "쉬운 영어 그림 낱말 500개",
+    description: "쉬운 영어 단수 그림 낱말 100개",
     color: "#7c5ce0",
     softColor: "#f2edff",
     accent: "#a995ed",

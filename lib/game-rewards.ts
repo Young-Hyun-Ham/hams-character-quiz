@@ -19,12 +19,20 @@
  */
 export const gameRewardConfig = {
   /** 저장된 예전 기본 보상값을 새 설정으로 갱신할 때 사용하는 버전입니다. */
-  version: 9,
+  version: 10,
 
   stickerRewards: {
-    /** ABC 영어교실: 10문제 중 9문제 이상 맞히면 3개를 지급합니다. */
+    /** ABC 영어교실: 10문제를 모두 맞히면 3개를 지급합니다. */
     abc: {
       amount: 3,
+      requiredTotal: 10,
+      minimumCorrect: 10,
+      requirePerfect: true,
+      chance: 1,
+    },
+    /** ABC 영어교실: 정확히 9문제를 맞히면 1개를 지급합니다. */
+    abcNine: {
+      amount: 1,
       requiredTotal: 10,
       minimumCorrect: 9,
       requirePerfect: false,
