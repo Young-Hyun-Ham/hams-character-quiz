@@ -1,3 +1,15 @@
+.hams-payment-overlay {
+  z-index: 2000 !important;
+}
+.hams-payment-overlay-front {
+  z-index: 2001 !important;
+}
+body:has(> .hams-payment-overlay-front)
+  > .hams-payment-overlay:not(.hams-payment-overlay-front) {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .hampo-charge-dialog {
   position: fixed;
   inset: 0;

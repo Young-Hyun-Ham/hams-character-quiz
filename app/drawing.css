@@ -196,10 +196,10 @@
   cursor: pointer;
 }
 .draw-layout {
-  width: min(1280px, calc(100% - 36px));
+  width: min(1540px, calc(100% - 36px));
   margin: 26px auto 0;
   display: grid;
-  grid-template-columns: 340px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 22px;
   align-items: start;
 }
@@ -328,7 +328,7 @@
   cursor: pointer;
 }
 .studio-panel {
-  padding: 25px;
+  padding: 28px;
 }
 .studio-title {
   display: flex;
@@ -356,7 +356,9 @@
 }
 .drawing-paper {
   aspect-ratio: 4/3;
-  max-height: 650px;
+  width: min(100%, 1200px);
+  max-height: none;
+  margin-inline: auto;
   position: relative;
   overflow: hidden;
   display: flex;
@@ -410,6 +412,9 @@
   height: 100%;
   touch-action: none;
   cursor: crosshair;
+}
+.drawing-tool-eraser .drawing-surface canvas {
+  cursor: cell;
 }
 .drawing-tip {
   position: absolute;
@@ -613,6 +618,25 @@
   border-radius: 50%;
   background: #475569;
 }
+.drawing-tool-options {
+  margin-bottom: 7px;
+}
+.size-tools .drawing-tool-options button {
+  width: 36px;
+  height: 32px;
+}
+.drawing-tool-options svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: #657184;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.drawing-tool-options button.active svg {
+  stroke: var(--theme);
+}
 .guide-tools {
   min-width: 0;
   margin-left: auto;
@@ -808,6 +832,23 @@
 }
 .hampo-confirm-dialog .hampo-dialog-header h1 {
   margin: 0;
+}
+.hampo-charge-choice-dialog > p strong {
+  color: #dc2626;
+}
+.hampo-charge-choice-dialog .hampo-charge-choice-safe {
+  padding: 13px;
+  border-radius: 14px;
+  background: #ecfdf5;
+  color: #047857;
+  font-weight: 800;
+}
+.hampo-charge-choice-dialog > div {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+.hampo-charge-choice-dialog .hampo-charge-current-button {
+  background: #dc2626;
 }
 @media (max-width: 560px) {
   .drawing-review-dialog form {
@@ -1109,6 +1150,17 @@
   .drawing-size-options.size-tools button {
     width: 20px;
     height: 24px;
+  }
+  .drawing-size-options.size-tools .drawing-tool-options button {
+    width: 30px;
+    height: 27px;
+  }
+  .drawing-tool-options {
+    margin-bottom: 4px;
+  }
+  .drawing-tool-options svg {
+    width: 18px;
+    height: 18px;
   }
   .drawing-size-options.size-tools i {
     max-width: 18px;

@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import {
   getSsoAccessTokenFromRequest,
+  getSsoClientId,
   getSsoServerUrl,
   getSsoUserFromRequest,
 } from "@hams-fam/sso-client";
@@ -14,16 +15,31 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 async function consumeDrawingHampo(request: Request, drawingId: string) {
+  const sessionUser = getSsoUserFromRequest(request);
+  if (!sessionUser)
+    return { ok: false as const, error: "login_required", status: 401 };
   const accessToken = getSsoAccessTokenFromRequest(request);
-  if (!accessToken)
-    return { ok: false as const, error: "sso_reauthentication_required" };
+  const clientSecret = process.env.HAMS_OAUTH_CLIENT_SECRET?.trim();
+  if (!accessToken && !clientSecret)
+    return {
+      ok: false as const,
+      error: "sso_reauthentication_required",
+      status: 401,
+    };
 
   const response = await fetch(
     new URL("/api/sso/hampo/consume", getSsoServerUrl()),
     {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        ...(clientSecret
+          ? {
+              "X-Hams-Client-Id": getSsoClientId(),
+              "X-Hams-Client-Secret": clientSecret,
+              "X-Hams-User-Id": sessionUser.id,
+            }
+          : {}),
         "Content-Type": "application/json",
       },
       body: JSON.stringify({

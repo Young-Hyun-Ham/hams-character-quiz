@@ -10,7 +10,13 @@ import { HampoChargeDialog } from "../../components/hampo-charge-dialog";
 import { getAdminAuthorization, refreshStore } from "../../stickers/storage";
 
 type Point = { x: number; y: number };
-type Stroke = { color: string; size: number; points: Point[] };
+type DrawingTool = "pen" | "eraser";
+type Stroke = {
+  color: string;
+  size: number;
+  points: Point[];
+  tool: DrawingTool;
+};
 type GestureStart = { scrollLeft: number; scrollTop: number; midpoint: Point };
 
 const PAGE_SIZE = 48;
@@ -84,6 +90,7 @@ export default function DrawingStudio({
   const [guideZoom, setGuideZoom] = useState(100);
   const [brushColor, setBrushColor] = useState(COLORS[0]);
   const [brushSize, setBrushSize] = useState(BRUSH_SIZES[0]);
+  const [drawingTool, setDrawingTool] = useState<DrawingTool>("pen");
   const [hasDrawing, setHasDrawing] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [historyState, setHistoryState] = useState({ undo: 0, redo: 0 });
@@ -108,6 +115,7 @@ export default function DrawingStudio({
   const successDialogRef = useRef<HTMLDialogElement>(null);
   const failureDialogRef = useRef<HTMLDialogElement>(null);
   const hampoConfirmDialogRef = useRef<HTMLDialogElement>(null);
+  const hampoChargeChoiceDialogRef = useRef<HTMLDialogElement>(null);
   const strokesRef = useRef<Stroke[]>([]);
   const redoStrokesRef = useRef<Stroke[]>([]);
   const activeStrokeRef = useRef<Stroke | null>(null);
@@ -140,6 +148,9 @@ export default function DrawingStudio({
       height: number,
     ) => {
       if (!stroke.points.length) return;
+      context.save();
+      context.globalCompositeOperation =
+        stroke.tool === "eraser" ? "destination-out" : "source-over";
       context.beginPath();
       context.lineCap = "round";
       context.lineJoin = "round";
@@ -154,6 +165,7 @@ export default function DrawingStudio({
           stroke.points[0].y * height + 0.01,
         );
       context.stroke();
+      context.restore();
     },
     [],
   );
@@ -329,6 +341,7 @@ export default function DrawingStudio({
       color: brushColor,
       size: brushSize,
       points: [getPoint(event)],
+      tool: drawingTool,
     };
     activeStrokeRef.current = stroke;
     activeStrokeCommittedRef.current = false;
@@ -383,6 +396,9 @@ export default function DrawingStudio({
     const previous = stroke.points.at(-1) || point;
     stroke.points.push(point);
     if (!context) return;
+    context.save();
+    context.globalCompositeOperation =
+      stroke.tool === "eraser" ? "destination-out" : "source-over";
     context.beginPath();
     context.lineCap = "round";
     context.lineJoin = "round";
@@ -391,6 +407,7 @@ export default function DrawingStudio({
     context.moveTo(previous.x * bounds.width, previous.y * bounds.height);
     context.lineTo(point.x * bounds.width, point.y * bounds.height);
     context.stroke();
+    context.restore();
   };
   const stopDrawing = (event: ReactPointerEvent<HTMLCanvasElement>) => {
     if (event.pointerType === "touch") {
@@ -572,7 +589,10 @@ export default function DrawingStudio({
       }
       if (!response.ok && payload.error === "insufficient_hampo") {
         hampoConfirmDialogRef.current?.close();
-        setHampoChargeOpen(true);
+        window.setTimeout(
+          () => hampoChargeChoiceDialogRef.current?.showModal(),
+          0,
+        );
         return;
       }
       if (!response.ok) throw Error("image_save_failed");
@@ -627,6 +647,7 @@ export default function DrawingStudio({
         </button>
       </header>
       <div className="draw-layout">
+        {/* 캐릭터 도감 패널은 캔버스 영역 확대를 위해 임시로 숨깁니다.
         <aside
           className="catalog-panel"
           aria-label={`${world.title} 캐릭터 도감`}
@@ -684,6 +705,7 @@ export default function DrawingStudio({
             </button>
           )}
         </aside>
+        */}
 
         <section className="studio-panel">
           <div className="studio-title">
@@ -709,7 +731,9 @@ export default function DrawingStudio({
               />
             </button>
           </div>
-          <div className={`drawing-frame${isDrawing ? " is-drawing" : ""}`}>
+          <div
+            className={`drawing-frame drawing-tool-${drawingTool}${isDrawing ? " is-drawing" : ""}`}
+          >
             <div className="drawing-canvas-option drawing-color-options tool-group color-tools">
               <span>색연필</span>
               <div>
@@ -826,6 +850,39 @@ export default function DrawingStudio({
               </button>
             </div>
             <div className="drawing-canvas-option drawing-size-options tool-group size-tools">
+              <span>도구</span>
+              <div
+                className="drawing-tool-options"
+                role="group"
+                aria-label="그리기 도구"
+              >
+                <button
+                  type="button"
+                  className={drawingTool === "pen" ? "active" : ""}
+                  onClick={() => setDrawingTool("pen")}
+                  aria-label="펜"
+                  aria-pressed={drawingTool === "pen"}
+                  title="펜"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m4 20 4.4-1 10.3-10.3a2.1 2.1 0 0 0 0-3l-.4-.4a2.1 2.1 0 0 0-3 0L5 15.6 4 20Z" />
+                    <path d="m13.8 6.8 3.4 3.4M5 15.6l3.4 3.4" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  className={drawingTool === "eraser" ? "active" : ""}
+                  onClick={() => setDrawingTool("eraser")}
+                  aria-label="지우개"
+                  aria-pressed={drawingTool === "eraser"}
+                  title="지우개"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m4.2 14.3 9.6-9.6a2 2 0 0 1 2.8 0l2.7 2.7a2 2 0 0 1 0 2.8l-8.7 8.7a2 2 0 0 1-2.8 0l-3.6-1.8a2 2 0 0 1 0-2.8Z" />
+                    <path d="m10.5 8 5.5 5.5M8.2 19.5H20" />
+                  </svg>
+                </button>
+              </div>
               <span>굵기</span>
               <div>
                 {BRUSH_SIZES.map((size) => (
@@ -1076,7 +1133,10 @@ export default function DrawingStudio({
             onClick={() => {
               if (hampoBalance < 1) {
                 hampoConfirmDialogRef.current?.close();
-                setHampoChargeOpen(true);
+                window.setTimeout(
+                  () => hampoChargeChoiceDialogRef.current?.showModal(),
+                  0,
+                );
               } else void saveReviewedImage(true);
             }}
           >
@@ -1086,6 +1146,55 @@ export default function DrawingStudio({
             type="button"
             className="drawing-result-close"
             onClick={() => hampoConfirmDialogRef.current?.close()}
+          >
+            취소
+          </button>
+        </div>
+      </dialog>
+      <dialog
+        ref={hampoChargeChoiceDialogRef}
+        className="drawing-result-dialog hampo-charge-choice-dialog"
+        onCancel={() => hampoChargeChoiceDialogRef.current?.close()}
+      >
+        <span aria-hidden="true">⚠️</span>
+        <h2>함포 충전 방법을 선택해 주세요</h2>
+        <p>
+          현재 화면에서 충전을 진행하면 결제 페이지로 이동하면서
+          <strong> 아직 저장하지 않은 그림이 사라질 수 있습니다.</strong>
+        </p>
+        <p className="hampo-charge-choice-safe">
+          그림을 지키려면 새 창에서 충전한 뒤 이 화면으로 돌아와 다시 저장해
+          주세요.
+        </p>
+        <div>
+          <button
+            type="button"
+            onClick={() => {
+              window.open(
+                "/hampo/charge",
+                "hampo-charge",
+                "popup,width=620,height=760,resizable=yes,scrollbars=yes",
+              );
+              hampoChargeChoiceDialogRef.current?.close();
+            }}
+          >
+            새 창에서 충전
+          </button>
+          <button
+            type="button"
+            className="hampo-charge-current-button"
+            onClick={() => {
+              hampoChargeChoiceDialogRef.current?.close();
+              successDialogRef.current?.close();
+              window.setTimeout(() => setHampoChargeOpen(true), 0);
+            }}
+          >
+            그림이 사라져도 현재 화면에서 충전
+          </button>
+          <button
+            type="button"
+            className="drawing-result-close"
+            onClick={() => hampoChargeChoiceDialogRef.current?.close()}
           >
             취소
           </button>

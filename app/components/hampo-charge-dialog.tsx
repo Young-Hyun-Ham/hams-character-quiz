@@ -1,38 +1,50 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { HampoChargeModal } from "@hams-fam/sso-client/payments/react";
+import { useEffect, useState } from "react";
 import "./hampo-charge-dialog.css";
 
-export function HampoChargeDialog({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
+export function HampoChargeDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [currentBalance, setCurrentBalance] = useState(0);
+  const [returnTo, setReturnTo] = useState("/");
+
   useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    if (open && !dialog.open) dialog.showModal();
-    if (!open && dialog.open) dialog.close();
+    if (!open) return;
+    setReturnTo(`${window.location.pathname}${window.location.search}`);
+    const controller = new AbortController();
+    void fetch("/api/auth/hampo", {
+      cache: "no-store",
+      credentials: "same-origin",
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) return;
+        const payload = (await response.json()) as { hampoBalance?: number };
+        if (typeof payload.hampoBalance === "number") setCurrentBalance(payload.hampoBalance);
+      })
+      .catch(() => undefined);
+    return () => controller.abort();
   }, [open]);
+
+  if (!open) return null;
   return (
-    <dialog ref={dialogRef} className="hampo-charge-dialog" onCancel={onClose}>
-      <div className="hampo-dialog-header">
-        <span className="brand-mark">
-          <b>C</b>
-        </span>
-        <h1>함포 충전</h1>
-      </div>
-      <p>
-        카드 결제 연동 준비 중입니다...
-        <br />
-        이용에 불편을 드려 죄송합니다.
-      </p>
-      <button type="button" onClick={onClose}>
-        확인
-      </button>
-    </dialog>
+    <HampoChargeModal
+      currentBalance={currentBalance}
+      initialAmount={10}
+      payment={{
+        createOrderEndpoint: "/api/payments/toss/orders",
+        createOrderBody: (hampoAmount) => ({ hampoAmount }),
+        successPath: "/payments/toss/success",
+        failPath: "/payments/toss/fail",
+        loginReturnUrl: returnTo,
+      }}
+      onCharged={(balance) => {
+        setCurrentBalance(balance);
+        window.dispatchEvent(
+          new CustomEvent("hampo-balance-changed", { detail: { balance } }),
+        );
+      }}
+      onClose={onClose}
+    />
   );
 }
